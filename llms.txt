@@ -1,0 +1,139 @@
+# ai-model-catalogue — the contract for writing a consumer
+
+> Which AI model each feature calls, what each one costs, and when it retires.
+> One Ed25519-signed file, fetched by every deployment, verified against a
+> public key compiled into the product. GitHub and the CDN are delivery, not
+> authority: neither is trusted, and neither needs to be.
+
+If you are writing or changing code that reads this catalogue, this file is the
+contract. `README.md` is for whoever publishes it. `catalogue.schema.json` is
+the shape, and `build.mjs` enforces it before signing, so the two cannot drift.
+
+## What is fetched
+
+```
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.stable.json
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.canary.json
+```
+
+The file is an envelope, not the catalogue:
+
+```json
+{ "payload": "<the catalogue, as a JSON string>", "sig": "<base64>" }
+```
+
+`payload` is a string on purpose. The signature covers exact bytes, and parsing
+then re-serialising an object changes key order, which turns a perfectly valid
+catalogue into one that fails to verify with nothing to show why. Verify the
+bytes you received. Never verify a re-serialised object.
+
+```js
+crypto.verify(null, Buffer.from(payload, "utf8"), PUBLIC_KEY_PEM, Buffer.from(sig, "base64"))
+```
+
+## Do and do not
+
+- DO compile the public key into the build. Fetching it defeats the signature
+  entirely: whoever served you a forged catalogue would serve the key for it.
+- DO keep the last catalogue that verified, and fall back to it.
+- DO keep a hardcoded chain of model ids in the product as a last resort, below
+  the cached copy. A deployment whose catalogue is unreadable must keep
+  answering customers, not stop.
+- DO treat every rejection as the same event: keep using what you already have,
+  and say so somewhere an operator will see.
+- DO NOT throw out of the adopt path. There is one answer to every failure.
+- DO NOT read `catalogue.src.json` at runtime. It is unsigned, it carries
+  `_comment` keys that never reach the wire, and it is for maintainers.
+- DO NOT let an unverified payload reach any other code, including for logging.
+- DO NOT pin `@latest`. Use the plain path, or `@<tag>` when you need a file
+  that will never move.
+
+## After the signature verifies
+
+In order, and all of them before the catalogue is adopted:
+
+1. `JSON.parse(payload)`.
+2. Reject if `version` is not an integer, or is not greater than the version you
+   already hold. A stale copy sitting in a CDN edge must never walk a deployment
+   backwards. First run: compare against 0.
+3. Reject if `minClientVersion` is greater than this build's `CLIENT_VERSION`.
+   An old build reading a new file and silently missing the part that mattered
+   is worse than an old build that kept working.
+4. Reject if `purposes.default` is missing or empty.
+5. Reject if any chain names a model id that `models` does not describe. The
+   cost of not checking is not a crash: it is a cost report that falls back to
+   `fallbackPrice` and reads plausibly while being wrong.
+
+## Choosing a model
+
+`purposes` maps a feature id to an ordered chain of model ids. The keys are the
+exact strings the product already passes at its call sites, so that the model
+map and the cost report name things the same way.
+
+- A feature with no key here falls to `purposes.default`. Adding a feature to
+  the product before adding it here is therefore safe.
+- Walk the chain in order. Take the first model that is answering.
+- `retiresOn` is the date the provider stops answering, or null.
+
+## Prices
+
+`models.<id>.price` is `{ input, cachedInput, output }` in USD per 1,000,000
+tokens. Note the nesting: the price is an object under `price`, not three fields
+on the model.
+
+```
+usd = inputTokens / 1e6 * price.input
+    + cachedInputTokens / 1e6 * price.cachedInput
+    + outputTokens / 1e6 * price.output
+thb = usd * usdToThb
+```
+
+`usdToThb` is applied at the single edge where a USD rate becomes a baht figure.
+A model id with no entry in `models` uses `fallbackPrice`, which exists so that
+an unrecognised model does not report as free. A model listed in this catalogue
+always has its own price: `build.mjs` refuses to sign one that does not.
+
+## Embeddings are not a chain
+
+`kb-embed-index` and `kb-embed-query` name exactly one model each, and
+`build.mjs` refuses more. A fallback there would write a second model's vectors
+into the same table that retrieval reads without filtering by model, and the
+result is not worse search, it is meaningless search, with nothing surfacing as
+an error.
+
+An embedding model carries `embedding: true` and `dim`. `dim` is part of the
+model's identity rather than a setting: vectors already stored were written at
+that width, and cosine against a different width means nothing. A consumer that
+already holds vectors should treat what is on disk as winning over what the
+catalogue says, and raise an alert rather than silently re-pointing.
+
+## The catalogue object
+
+| field | |
+|---|---|
+| `version` | integer, only ever goes up |
+| `channel` | `stable` or `canary`, stamped inside the payload |
+| `minClientVersion` | integer; above your `CLIENT_VERSION` means ignore the file |
+| `publishedAt` | ISO 8601, operator-facing only |
+| `notes` | optional, operator-facing only |
+| `usdToThb` | positive number |
+| `models` | model id to `{ price, vision, embedding?, dim?, status, retiresOn }` |
+| `purposes` | feature id to an ordered array of model ids; `default` required |
+| `fallbackPrice` | `{ input, cachedInput, output }` |
+
+`status` is `ga`, `preview`, `deprecated` or `retired`. `retired` means no chain
+may name it, which `build.mjs` enforces; `deprecated` is a warning and nothing
+more. `vision` says the model can be handed an image, and `build.mjs` refuses to
+sign an image-reading chain that falls to a model without it.
+
+## Failure table
+
+| what happened | what the consumer does |
+|---|---|
+| fetch failed | keep the cached catalogue |
+| not a `{ payload, sig }` pair | keep the cached catalogue |
+| signature does not verify | keep the cached catalogue; never parse the payload |
+| version not newer | keep the cached catalogue; this is the normal no-op |
+| `minClientVersion` too high | keep the cached catalogue; the build needs updating |
+| catalogue malformed | fall to the hardcoded chain, and alert |
+| every model in a chain retired | fall to `default`, then to the hardcoded chain |

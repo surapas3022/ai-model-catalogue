@@ -8,6 +8,19 @@ It lives in its own repository on purpose, and the reason is not tidiness:
 product it serves is not sold as source. The signing key must also stay away
 from the product tree, and this catalogue outlives any single build of it.
 
+## The files
+
+| file | |
+|---|---|
+| `catalogue.src.json` | the one you edit. Carries `_comment` keys, which are stripped before signing |
+| `catalogue.schema.json` | the shape, enforced by `build.mjs` before it signs — not documentation that drifts |
+| `build.mjs` | signs, and refuses the mistakes listed below |
+| `verify.mjs` | 34 cases proving the signature and every one of those refusals |
+| `llms.txt` | the contract, for whoever writes the next consumer |
+| `config.stable.json`, `config.canary.json` | generated. Never hand-edit them |
+| `catalogue-public.pem` | committed, embedded in the product build |
+| `catalogue-private.pem` | gitignored, or not on disk at all — see below |
+
 ## Publishing
 
 ```bash
@@ -17,8 +30,50 @@ node build.mjs canary     # sign the same source as the canary channel
 node verify.mjs           # prove the signature and the guards still hold
 ```
 
-Edit `catalogue.src.json`, raise `version`, run `build.mjs`, commit, push.
-`config.stable.json` and `config.canary.json` are generated — never hand-edit them.
+Edit `catalogue.src.json`, raise `version`, run `build.mjs`, then `verify.mjs`,
+commit, push. In that order: `verify.mjs` checks that the published file is
+byte-for-byte what building the source produces, which is only true once you
+have built it.
+
+## Signing from CI, so the key is not on a laptop
+
+Push to `main` with `catalogue.src.json` changed and
+`.github/workflows/publish.yml` signs `stable`, commits the result and purges
+the CDN. Put the whole private PEM, `BEGIN` and `END` lines included, in a
+repository secret named `CATALOGUE_PRIVATE_KEY`.
+
+`build.mjs` and `verify.mjs` both read the key from `CATALOGUE_KEY` — the PEM
+itself, not a path — falling back to `catalogue-private.pem` on disk, or to a
+path in `CATALOGUE_KEY_FILE`. A secret pasted into a web form usually comes back
+with its newlines escaped; that case is repaired rather than reported, because
+the error it otherwise produces names nothing that would lead you to the cause.
+
+**Only `stable` publishes automatically.** Signing canary from the same source
+in the same run would make it identical to stable but for one word, and a canary
+carrying the same content as stable cannot break first, which is the only reason
+to have one. Stage a canary with **Run workflow** and pick the channel.
+
+A push that changes `build.mjs`, `verify.mjs` or the schema but not the
+catalogue runs `verify.mjs` and publishes nothing. There is nothing to publish:
+the source has not moved, so its version is not newer than what is already out
+there.
+`catalogue.schema.json` describes the shape of the source; the build enforces it,
+and a consumer can read it to write a client.
+
+Or let CI do it. A push to `main` touching `catalogue.src.json` signs it,
+commits `config.stable.json` and purges the CDN edge — the key lives in the
+repository secret `CATALOGUE_PRIVATE_KEY` and never becomes a file on anyone's
+laptop. Canary is deliberately manual: **Actions → Publish signed catalogue →
+Run workflow → canary**, because a canary carrying the same content as stable
+cannot break first.
+
+## Consuming it
+
+[`INTEGRATING.md`](INTEGRATING.md) is the step-by-step for making a product read
+this instead of its own hardcoded model names, and
+[`client/catalogue-client.mjs`](client/catalogue-client.mjs) is a working
+consumer to copy. [`AGENTS.md`](AGENTS.md) is the same ground written for an AI
+coding agent editing this repository.
 
 ## Three rules
 
@@ -47,8 +102,8 @@ A deployment's channel is set when its build is generated, not at runtime.
 ## URLs
 
 ```
-https://cdn.jsdelivr.net/gh/<user>/ai-model-catalogue/config.stable.json
-https://cdn.jsdelivr.net/gh/<user>/ai-model-catalogue/config.canary.json
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.stable.json
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.canary.json
 ```
 
 Those paths are mutable, so jsDelivr caches them for hours. **Expect a change to
@@ -58,7 +113,7 @@ why the product also keeps a canary channel, a last-known-good copy, and a
 hardcoded floor.
 
 A pinned, permanently-cached URL is available if you ever need one:
-`https://cdn.jsdelivr.net/gh/<user>/ai-model-catalogue@<tag>/config.stable.json`
+`https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue@<tag>/config.stable.json`
 
 ## File shape
 
@@ -67,6 +122,8 @@ Published files are `{ "payload": "<json as a string>", "sig": "<base64>" }`.
 `payload` is a string rather than a nested object because the signature covers
 exact bytes. Signing an object would let JSON key order change the bytes, and a
 perfectly valid catalogue would then fail to verify with nothing to show why.
+
+The schema describes what is inside `payload`, not the file itself.
 
 Ed25519. `catalogue-public.pem` is committed and embedded in the product build —
 it verifies and cannot sign. `catalogue-private.pem` is gitignored; if it leaks,
@@ -88,6 +145,13 @@ fetched it:
 - a missing `purposes.default`, which would leave any newly added feature with no
   chain at all
 - a `version` that is not newer than what is already published on that channel
+- a chain naming a model whose `status` is `retired`
+- an embedding model with no `dim`
+- a channel name that is not `stable` or `canary`. A typo used to sign happily
+  into `config.<typo>.json`: a valid, correctly signed file that nobody fetches,
+  sitting next to a `config.stable.json` still holding last month's models
+- anything `catalogue.schema.json` rejects — a misspelled field, a `status`
+  outside the list, a price written as a string, a missing `publishedAt`
 
 ## Keys in `purposes`
 
