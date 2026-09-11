@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/ai-model-catalogue/catalogue.schema.json",
+  "$id": "https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/catalogue.schema.json",
   "title": "Model catalogue (the JSON inside the signed payload)",
   "description": "This describes the object a consumer gets after verifying the signature and parsing payload. It is NOT the file on the CDN: that file is { payload: string, sig: string }. build.mjs validates catalogue.src.json against this file before signing, so what is published here and what a client is told to expect cannot drift apart.",
 

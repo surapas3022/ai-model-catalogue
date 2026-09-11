@@ -116,8 +116,10 @@ every check in it maps to a mistake that reaches a fleet.
 | `catalogue-public.pem` | committed, embedded in the product build, verifies only |
 | `catalogue-private.pem` | gitignored, signs, never leaves the machine |
 | `.github/workflows/publish.yml` | signs and publishes on a push to `main`, then purges the CDN edge |
+| `llms.txt` | the consumer contract: envelope, checks, prices, failure table |
 | `INTEGRATING.md` | how a product consumes this. Read it before touching client code |
 | `client/catalogue-client.mjs` | reference consumer, copy into the product |
+| `CLAUDE.md` | a pointer to this file, so an agent reaches it either way |
 
 ## Where the signing key comes from
 

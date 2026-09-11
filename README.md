@@ -17,6 +17,10 @@ from the product tree, and this catalogue outlives any single build of it.
 | `build.mjs` | signs, and refuses the mistakes listed below |
 | `verify.mjs` | 34 cases proving the signature and every one of those refusals |
 | `llms.txt` | the contract, for whoever writes the next consumer |
+| `INTEGRATING.md` | the nine steps for wiring this into a product |
+| `client/catalogue-client.mjs` | a working consumer, ready to copy |
+| `AGENTS.md`, `CLAUDE.md` | the same ground, for an AI agent editing this repository |
+| `.github/workflows/publish.yml` | signs on a push to `main`, then purges the CDN edge |
 | `config.stable.json`, `config.canary.json` | generated. Never hand-edit them |
 | `catalogue-public.pem` | committed, embedded in the product build |
 | `catalogue-private.pem` | gitignored, or not on disk at all — see below |
@@ -57,15 +61,6 @@ A push that changes `build.mjs`, `verify.mjs` or the schema but not the
 catalogue runs `verify.mjs` and publishes nothing. There is nothing to publish:
 the source has not moved, so its version is not newer than what is already out
 there.
-`catalogue.schema.json` describes the shape of the source; the build enforces it,
-and a consumer can read it to write a client.
-
-Or let CI do it. A push to `main` touching `catalogue.src.json` signs it,
-commits `config.stable.json` and purges the CDN edge — the key lives in the
-repository secret `CATALOGUE_PRIVATE_KEY` and never becomes a file on anyone's
-laptop. Canary is deliberately manual: **Actions → Publish signed catalogue →
-Run workflow → canary**, because a canary carrying the same content as stable
-cannot break first.
 
 ## Consuming it
 

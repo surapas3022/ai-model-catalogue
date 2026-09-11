@@ -15,11 +15,13 @@ import { verify } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-// ---- 1. adapt: the public key, copied from catalogue-public.pem ------------
-// Embed it at build time. Fetching the key would defeat the signature entirely:
-// whoever can swap the catalogue could swap the key that checks it.
+// ---- 1. check: the public key, as committed in catalogue-public.pem -------
+// Already filled in, because it is public and it is this repository's. Confirm
+// it matches catalogue-public.pem and leave it embedded at build time. Fetching
+// the key would defeat the signature entirely: whoever can swap the catalogue
+// could swap the key that checks it.
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-PASTE THE CONTENTS OF catalogue-public.pem HERE
+MCowBQYDK2VwAyEAiyy9g5HsIBtVmlOo4iWQbWYUBjhKwbppkYedlxoiDXo=
 -----END PUBLIC KEY-----
 `;
 
