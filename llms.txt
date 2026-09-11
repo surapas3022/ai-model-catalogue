@@ -132,6 +132,8 @@ catalogue says, and raise an alert rather than silently re-pointing.
 | `publishedAt` | ISO 8601, operator-facing only |
 | `notes` | optional, operator-facing only |
 | `usdToThb` | positive number |
+| `priceSource` | the page the rates were read from. Cite it in a cost report rather than implying the rates are yours |
+| `pricesCheckedOn` | ISO date they were last read. Optional to act on, but it is the only measure of how stale a rate is |
 | `models` | model id to `{ price, vision, embedding?, dim?, status, retiresOn }` |
 | `purposes` | feature id to an ordered array of model ids; `default` required |
 | `fallbackPrice` | `{ input, cachedInput, output }` |

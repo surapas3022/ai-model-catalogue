@@ -40,6 +40,17 @@ Public on purpose: jsDelivr cannot serve a private repo.
 4. `node verify.mjs` — must end `all good`.
 5. Commit source and generated files together. Push.
 
+**Reprice anything, or add a model**
+Read <https://ai.google.dev/gemini-api/docs/pricing> first, every time. Not
+memory, not the last message in a thread, not another catalogue — that page.
+Then set `pricesCheckedOn` on both files to the day you read it.
+
+Two live traps on that page: the quoted rate for 3.8, 3.7 and 3.6-flash is the
+one charged **through 31 December 2026**, and a second, doubled rate starts on 1
+January 2027. Version 4 of this catalogue published the 2027 rate as today's,
+and nothing caught it. The other is that `input` here is one number while the
+page charges audio separately from text.
+
 **Add or reprice a model**
 Do it in both files, in the same commit. `verify.mjs` fails when a model in both
 carries different prices, and that check is the only thing standing between you
@@ -137,6 +148,7 @@ every check in it maps to a mistake that reaches a fleet.
 | `catalogue-private.pem` | gitignored. Signs. On a laptop or in the `CATALOGUE_PRIVATE_KEY` secret, nowhere else |
 | `.github/workflows/publish.yml` | signs and publishes on a push to `main`, then purges the CDN edge |
 | `llms.txt` | the consumer contract: envelope, checks, prices, failure table |
+| `priceSource` | a field in both catalogues, naming the page the rates were read from |
 | `INTEGRATING.md` | how a product consumes this. Read it before touching client code |
 | `client/catalogue-client.mjs` | reference consumer, copy into the product |
 | `CLAUDE.md` | a pointer to this file, so an agent reaches it either way |

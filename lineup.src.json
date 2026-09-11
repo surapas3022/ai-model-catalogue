@@ -15,11 +15,14 @@
     "nothing customer-specific, because this is public too."
   ],
 
-  "version": 2,
+  "version": 3,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T12:00:00Z",
-  "notes": "Rates checked against ai.google.dev/gemini-api/docs/pricing on 2026-09-11. 3.6-flash corrected from 1.5/0.15/7.5, which is the rate that starts on 1 January 2027, to the 0.75/0.075/3.75 being charged now. The three specialized models still carry rates this format cannot state honestly; see their comments.",
+  "publishedAt": "2026-09-11T13:00:00Z",
+  "notes": "Carries priceSource and pricesCheckedOn from this version on. Same rates as version 2.",
+
+  "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
+  "pricesCheckedOn": "2026-09-11",
 
   "usdToThb": 36,
 

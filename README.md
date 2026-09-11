@@ -77,6 +77,27 @@ this instead of its own hardcoded model names, and
 consumer to copy. [`AGENTS.md`](AGENTS.md) is the same ground written for an AI
 coding agent editing this repository.
 
+## Where the rates come from
+
+**<https://ai.google.dev/gemini-api/docs/pricing>** — Google's published pricing.
+Check every rate against it before publishing, and set `pricesCheckedOn` to the
+day you did.
+
+Both catalogues carry that URL as `priceSource` and the date as
+`pricesCheckedOn`, so the file a deployment holds can say where its numbers came
+from and how old the answer is. `verify.mjs` fails if the two catalogues cite
+different sources: two files with two authoritative-looking links is how a
+repository ends up defending two different sets of rates.
+
+A wrong rate is the one mistake here that never announces itself. It does not
+crash, it does not fail to verify, and it does not go missing. It produces a
+cost report that reads plausibly and is wrong, on a report a customer pays for.
+The date is the only thing in the file that says how much to trust it.
+
+Two things that page says and this format cannot: rates for 3.8, 3.7 and
+3.6-flash **double on 1 January 2027**, and `input` is one number while the
+provider charges audio at a different rate from text.
+
 ## Two catalogues
 
 `config` is the routing decision. Its `purposes` say which model a feature

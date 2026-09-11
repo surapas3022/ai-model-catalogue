@@ -110,6 +110,8 @@ refuses("a misspelled top-level field",
   (s) => { s.usdToTHB = s.usdToThb; delete s.usdToThb; }, "not a field this catalogue has");
 refuses("a status outside the list",
   (s) => { s.models["gemini-3.7-flash"].status = "probably-fine"; }, "expected one of");
+refuses("a priceSource that is there but empty",
+  (s) => { s.priceSource = ""; }, "is empty");
 refuses("a missing publishedAt",
   (s) => { delete s.publishedAt; }, "publishedAt is required");
 refuses("vision written as a string",
@@ -258,6 +260,15 @@ console.log("\n10. the second catalogue, and the one thing having two of them ca
   const unpriced = [...new Set(Object.values(parsed.purposes).flat())].filter((id) => !lineup.models[id]);
   check("every model the routing catalogue can reach also appears in the lineup",
     unpriced.length === 0, unpriced.length ? `missing from lineup: ${unpriced.join(", ")}` : "");
+
+  // Two files citing two sources is how a repository ends up defending two
+  // different sets of rates, each with a link that looks authoritative.
+  check("both catalogues cite the same price source",
+    typeof parsed.priceSource === "string" && parsed.priceSource === lineup.priceSource,
+    `config says ${parsed.priceSource}, lineup says ${lineup.priceSource}`);
+  check("both say when the rates were last read from it",
+    typeof parsed.pricesCheckedOn === "string" && typeof lineup.pricesCheckedOn === "string" &&
+    !Number.isNaN(Date.parse(parsed.pricesCheckedOn)) && !Number.isNaN(Date.parse(lineup.pricesCheckedOn)));
 
   copyFileSync("lineup.src.json", path.join(dir, "lineup.src.json"));
   rmSync(path.join(dir, "lineup.stable.json"), { force: true });

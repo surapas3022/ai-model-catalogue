@@ -42,6 +42,16 @@
       "type": "string",
       "description": "Shown to whoever is reading a deployment's catalogue status. Optional."
     },
+    "priceSource": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the rates in this file were read from, so a cost report can cite it and whoever edits next knows what to check against. Optional, and an older build that ignores it behaves correctly, so it does not raise minClientVersion."
+    },
+    "pricesCheckedOn": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO date the rates were last read from priceSource. A wrong rate does not go missing, it just quietly stops matching, so this is the only thing in the file that says how old the answer is."
+    },
     "usdToThb": {
       "type": "number",
       "exclusiveMinimum": 0,

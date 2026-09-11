@@ -8,11 +8,14 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 6,
+  "version": 7,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T12:00:00Z",
-  "notes": "Checked every rate against ai.google.dev/gemini-api/docs/pricing. One was wrong: 3.6-flash was carrying 1.5/0.15/7.5, which is real but is the rate that starts on 1 January 2027, not the one being charged now. No chain changed.",
+  "publishedAt": "2026-09-11T13:00:00Z",
+  "notes": "Carries priceSource and pricesCheckedOn from this version on. Same rates and same chains as version 6. A rate is the one field here that goes wrong without going missing, so the file now says where it was read and when.",
+
+  "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
+  "pricesCheckedOn": "2026-09-11",
 
   "usdToThb": 36,
 
