@@ -8,11 +8,11 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 2,
+  "version": 3,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T08:00:00Z",
-  "notes": "Same content as version 1. Raised to publish through the workflow for the first time, while nothing consumes this yet.",
+  "publishedAt": "2026-09-11T09:00:00Z",
+  "notes": "Same content again. Built locally and committed, to prove the workflow handles that rather than refusing a release it can see is already published.",
 
   "usdToThb": 36,
 
