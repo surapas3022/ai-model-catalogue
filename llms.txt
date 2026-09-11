@@ -59,8 +59,10 @@ In order, and all of them before the catalogue is adopted:
 3. Reject if `minClientVersion` is greater than this build's `CLIENT_VERSION`.
    An old build reading a new file and silently missing the part that mattered
    is worse than an old build that kept working.
-4. Reject if `purposes.default` is missing or empty.
-5. Reject if any chain names a model id that `models` does not describe. The
+4. Reject if `channel` is not the channel this build was generated for. A
+   canary file reaching a stable build is a mis-deploy, not an upgrade.
+5. Reject if `purposes.default` is missing or empty.
+6. Reject if any chain names a model id that `models` does not describe. The
    cost of not checking is not a crash: it is a cost report that falls back to
    `fallbackPrice` and reads plausibly while being wrong.
 

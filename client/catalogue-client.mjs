@@ -74,7 +74,19 @@ function open(fileText) {
   if (cat.minClientVersion > CLIENT_VERSION) {
     throw new Error(`catalogue needs client ${cat.minClientVersion}, this build is ${CLIENT_VERSION}`);
   }
+  if (!Number.isInteger(cat.version)) throw new Error("catalogue version is not an integer");
   if (!cat.purposes?.default?.length) throw new Error("catalogue has no default chain");
+  // A chain naming a model the catalogue does not describe does not crash
+  // anything: it produces a cost report that quietly falls back to
+  // fallbackPrice and reads plausibly while being wrong, on an invoice somebody
+  // pays. build.mjs refuses to sign one, and this refuses to adopt one anyway,
+  // because a consumer that trusts the publisher to have checked is a consumer
+  // that stops checking.
+  for (const [purpose, chain] of Object.entries(cat.purposes)) {
+    for (const id of chain) {
+      if (!cat.models?.[id]) throw new Error(`purpose ${purpose} names model ${id}, which this catalogue does not describe`);
+    }
+  }
   return cat;
 }
 

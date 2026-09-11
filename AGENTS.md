@@ -68,7 +68,8 @@ no key, because it looks configured and is not.
 
 - Hand-edit `config.stable.json` or `config.canary.json`.
 - Reuse or lower a `version`.
-- Commit `catalogue-private.pem`, or paste its contents anywhere.
+- Commit `catalogue-private.pem`, or paste its contents anywhere other than
+  the `CATALOGUE_PRIVATE_KEY` repository secret.
 - Add a keyword to `catalogue.schema.json` that `build.mjs` does not implement.
   The build throws rather than skipping it, and that is deliberate: a keyword
   nobody enforces reads as protection and is not.
@@ -88,17 +89,25 @@ secret `CATALOGUE_PRIVATE_KEY`; nothing writes it to disk. Canary is never
 signed automatically — a canary carrying the same content as stable cannot break
 first, which is the only reason to have one. Stage one with **Run workflow**.
 
-So in the normal case you commit the source and let CI produce the config. If
-you build locally instead, commit the generated file too, or the next CI run
-will do it for you and the diff will look like it came from nowhere.
+Either habit works. Commit the source alone and CI signs it, or run
+`node build.mjs` yourself and commit the generated file with it — the workflow
+notices the published version already matches the source, verifies it rather
+than signing it again, and purges the edge anyway. What you must not do is
+commit a generated file that does not match the source; `verify.mjs` fails on
+exactly that, in CI as well as locally.
 
 ## Before you say you are done
 
 ```bash
-node build.mjs          # must print the new version
+node build.mjs          # only if you are signing locally; prints the new version
 node verify.mjs         # must end: all good
 git status              # catalogue-private.pem must NOT be listed
 ```
+
+`verify.mjs` asserts that `config.stable.json` is byte-for-byte what building
+the source produces, so run it *after* the build if you built, and expect it to
+fail if you raised the version and did not. Committing the source alone is fine;
+CI builds and verifies in that order for you.
 
 If `verify.mjs` fails, the change does not ship. It is not a flaky test suite —
 every check in it maps to a mistake that reaches a fleet.
@@ -114,7 +123,7 @@ every check in it maps to a mistake that reaches a fleet.
 | `config.stable.json` | generated. Every deployment by default |
 | `config.canary.json` | generated. The two or three you are willing to break first |
 | `catalogue-public.pem` | committed, embedded in the product build, verifies only |
-| `catalogue-private.pem` | gitignored, signs, never leaves the machine |
+| `catalogue-private.pem` | gitignored. Signs. On a laptop or in the `CATALOGUE_PRIVATE_KEY` secret, nowhere else |
 | `.github/workflows/publish.yml` | signs and publishes on a push to `main`, then purges the CDN edge |
 | `llms.txt` | the consumer contract: envelope, checks, prices, failure table |
 | `INTEGRATING.md` | how a product consumes this. Read it before touching client code |

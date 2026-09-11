@@ -39,6 +39,10 @@ commit, push. In that order: `verify.mjs` checks that the published file is
 byte-for-byte what building the source produces, which is only true once you
 have built it.
 
+Or commit the source alone and let the workflow below sign it. Both are fine.
+What breaks is committing a generated file that does not match the source, and
+`verify.mjs` is the thing that catches it.
+
 ## Signing from CI, so the key is not on a laptop
 
 Push to `main` with `catalogue.src.json` changed and

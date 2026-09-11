@@ -75,7 +75,9 @@ still wrong for this deployment:
 | `cat.channel === CHANNEL` | a canary file served to a stable build is a mis-deploy, not an upgrade |
 | `cat.minClientVersion <= CLIENT_VERSION` | the catalogue uses a field this build cannot read |
 | `cat.version > current.version` | a stale copy in a CDN edge must not walk the deployment backwards |
+| `cat.version` is an integer | a version that is not a whole number cannot be compared, so nothing can be newer |
 | `cat.purposes.default` is non-empty | with no default, any feature id you missed has no chain at all |
+| every chain names a model in `models` | the cost report would fall back to `fallbackPrice` and read plausibly but wrong |
 
 ## Step 5 — cache the last known good copy
 

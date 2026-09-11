@@ -68,23 +68,47 @@ jobs:
         id: decide
         run: |
           set -euo pipefail
+
+          # Did the catalogue itself move in this push?
+          CHANGED=false
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "sign=true" >> "$GITHUB_OUTPUT"; exit 0
+            CHANGED=true
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              CHANGED=true
+            elif git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qx 'catalogue.src.json'; then
+              CHANGED=true
+            fi
           fi
-          BEFORE="${{ github.event.before }}"
+
           # A guard or a schema can change without the catalogue changing, and a
           # source that has not moved cannot be republished: its version is not
           # newer than what is already out there. Those pushes still run
           # verify.mjs below; they just have nothing to publish.
-          if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-            echo "sign=true" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qx 'catalogue.src.json'; then
-            echo "sign=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$CHANGED" != true ]; then
             echo "sign=false" >> "$GITHUB_OUTPUT"
             echo "catalogue.src.json did not change in this push; verifying only."
+            exit 0
           fi
+
+          # Whoever raised the version may also have run build.mjs before
+          # committing, which is what README.md used to tell everyone to do. The
+          # generated file is then already correct and already pushed, and
+          # signing again would only make build.mjs refuse a version it can see
+          # is published — a red run for a release that is, in fact, fine. Take
+          # the file as it stands and go straight to purging the edge, which is
+          # the one step a local build cannot do for itself.
+          SRC_V=$(node -p "JSON.parse(require('fs').readFileSync('catalogue.src.json','utf8')).version")
+          OUT_V=$(node -p "try{JSON.parse(JSON.parse(require('fs').readFileSync('config.${CHANNEL}.json','utf8')).payload).version}catch(e){0}")
+          if [ "$SRC_V" = "$OUT_V" ]; then
+            echo "sign=false" >> "$GITHUB_OUTPUT"
+            echo "prebuilt=true" >> "$GITHUB_OUTPUT"
+            echo "config.${CHANNEL}.json already carries version ${SRC_V}; verifying it, then purging."
+            exit 0
+          fi
+
+          echo "sign=true" >> "$GITHUB_OUTPUT"
 
       - name: Sign
         if: steps.decide.outputs.sign == 'true'
@@ -117,7 +141,7 @@ jobs:
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Purge the CDN
-        if: steps.commit.outputs.pushed == 'true'
+        if: steps.commit.outputs.pushed == 'true' || steps.decide.outputs.prebuilt == 'true'
         run: |
           set -euo pipefail
           # Without this the old file keeps being served for hours, and the run
