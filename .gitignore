@@ -1,0 +1,7 @@
+# The signing key. Everything in this repo is public by design — jsDelivr
+# cannot serve a private repo — so this file must never reach a commit.
+# It lives here only while you run build.mjs; back it up somewhere else.
+catalogue-private.pem
+
+node_modules/
+.DS_Store

@@ -1,0 +1,81 @@
+{
+  "_comment": [
+    "This is the file you edit by hand. build.mjs signs it into config.<channel>.json.",
+    "Three rules, and breaking any of them costs a customer something:",
+    "  1. version only ever goes UP. A deployment refuses a catalogue that is not newer.",
+    "  2. To undo a bad release, publish a HIGHER version carrying the old content.",
+    "     Deleting the file does nothing: the CDN keeps serving what it cached.",
+    "  3. Nothing customer-specific goes in here. This repo is public."
+  ],
+
+  "version": 1,
+  "channel": "stable",
+  "minClientVersion": 1,
+  "publishedAt": "2026-09-11T00:00:00Z",
+  "notes": "First catalogue. Same models and rates the code had hardcoded, so adopting it changes no behaviour.",
+
+  "usdToThb": 36,
+
+  "models": {
+    "gemini-3.7-flash": {
+      "price": { "input": 0.3, "cachedInput": 0.075, "output": 2.5 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.5-flash-lite": {
+      "price": { "input": 0.1, "cachedInput": 0.025, "output": 0.4 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.1-flash-lite": {
+      "price": { "input": 0.1, "cachedInput": 0.025, "output": 0.4 },
+      "vision": false,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-embedding-001": {
+      "_comment": "Embeddings bill input only. dim is part of the model's identity here: stored vectors were written at this size and cosine against a different size is meaningless, not merely worse.",
+      "price": { "input": 0.15, "cachedInput": 0.15, "output": 0 },
+      "vision": false,
+      "embedding": true,
+      "dim": 768,
+      "status": "ga",
+      "retiresOn": null
+    }
+  },
+
+  "purposes": {
+    "_comment": "Keys are the feature ids the code already passes to callGeminiWithResilience. Keep them identical to those strings, so the model map and the cost report name things the same way. default covers any feature added later.",
+
+    "default": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+
+    "auto-reply": ["gemini-3.7-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "agent-copilot": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "handoff-summary": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "qa-audit": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "rag-test": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "translate": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "voicebot": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+
+    "kb-import-document": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "kb-answer-draft": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+
+    "booking-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "order-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+    "order-address": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+
+    "_vision_comment": "Every chain below reads an image, so every model in them must have vision:true. build.mjs checks that.",
+    "attachment-vision": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "booking-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "order-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "inbox-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+
+    "_embedding_comment": "Single entry on purpose. A fallback here would write vectors of a second model into one table, and retrieval reads that table without filtering by model.",
+    "kb-embed-index": ["gemini-embedding-001"],
+    "kb-embed-query": ["gemini-embedding-001"]
+  },
+
+  "fallbackPrice": { "input": 0.3, "cachedInput": 0.075, "output": 2.5 }
+}
