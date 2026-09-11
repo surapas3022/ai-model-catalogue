@@ -15,11 +15,11 @@
     "nothing customer-specific, because this is public too."
   ],
 
-  "version": 1,
+  "version": 2,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T11:00:00Z",
-  "notes": "First lineup. Flash and Flash-Lite across three generations, the specialized image and live models, and the embedding model config.stable.json routes to. Rates as supplied on 2026-09-11.",
+  "publishedAt": "2026-09-11T12:00:00Z",
+  "notes": "Rates checked against ai.google.dev/gemini-api/docs/pricing on 2026-09-11. 3.6-flash corrected from 1.5/0.15/7.5, which is the rate that starts on 1 January 2027, to the 0.75/0.075/3.75 being charged now. The three specialized models still carry rates this format cannot state honestly; see their comments.",
 
   "usdToThb": 36,
 
@@ -41,8 +41,8 @@
       "retiresOn": null
     },
     "gemini-3.6-flash": {
-      "_comment": "Gemini 3.6 Flash · GA",
-      "price": { "input": 1.5, "cachedInput": 0.15, "output": 7.5 },
+      "_comment": "Gemini 3.6 Flash · GA. Doubles on 1 January 2027, along with 3.8 and 3.7 flash: input 1.5, cached 0.15, output 7.5.",
+      "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": false,
       "status": "ga",
       "retiresOn": null

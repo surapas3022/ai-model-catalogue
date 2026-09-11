@@ -8,11 +8,11 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 5,
+  "version": 6,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T11:00:00Z",
-  "notes": "Corrects two rates version 4 got wrong: 3.6-flash and 3.5-flash-lite were carrying the rates that belong to 2.5-flash and 2.5-flash-lite, one generation down. 3.5-flash-lite is in the default chain, so it was the one being understated, by 6.25x on output. No chain changed.",
+  "publishedAt": "2026-09-11T12:00:00Z",
+  "notes": "Checked every rate against ai.google.dev/gemini-api/docs/pricing. One was wrong: 3.6-flash was carrying 1.5/0.15/7.5, which is real but is the rate that starts on 1 January 2027, not the one being charged now. No chain changed.",
 
   "usdToThb": 36,
 
@@ -34,8 +34,8 @@
       "retiresOn": null
     },
     "gemini-3.6-flash": {
-      "_comment": "โมเดลเสถียรสำหรับการใช้งานจริง เพิ่มประสิทธิภาพ Token และลด Latency ในราคาประหยัด",
-      "price": { "input": 1.5, "cachedInput": 0.15, "output": 7.5 },
+      "_comment": "โมเดลเสถียรสำหรับการใช้งานจริง เพิ่มประสิทธิภาพ Token และลด Latency ในราคาประหยัด. Same rate as 3.8 and 3.7 flash, and like them it doubles on 1 January 2027: input 1.5, cached 0.15, output 7.5. Nothing in this format expresses a dated change, so someone has to publish that on the day.",
+      "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": false,
       "status": "ga",
       "retiresOn": null
