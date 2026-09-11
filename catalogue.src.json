@@ -8,11 +8,11 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 1,
+  "version": 2,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T00:00:00Z",
-  "notes": "First catalogue. Same models and rates the code had hardcoded, so adopting it changes no behaviour.",
+  "publishedAt": "2026-09-11T08:00:00Z",
+  "notes": "Same content as version 1. Raised to publish through the workflow for the first time, while nothing consumes this yet.",
 
   "usdToThb": 36,
 
