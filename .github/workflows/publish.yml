@@ -1,0 +1,132 @@
+# Signs the catalogue and puts it where deployments fetch it.
+#
+# The point of this workflow is not convenience. It is that the private key
+# stops living on somebody's laptop: it is a repository secret, build.mjs reads
+# it out of CATALOGUE_KEY, and nothing here ever writes it to disk.
+#
+# Order matters. build.mjs runs first because it is what refuses a bad source;
+# verify.mjs runs after it because one of its cases asserts that the published
+# file is byte-for-byte what building the source produces, which is only true
+# once this run has produced it.
+#
+# Only `stable` is published automatically. Signing canary from the same source
+# at the same moment would make the two files identical but for one word, and a
+# canary that carries the same content as stable cannot break first — which is
+# the entire reason to have one. Stage a canary with "Run workflow" instead.
+name: Publish signed catalogue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - catalogue.src.json
+      - catalogue.schema.json
+      - build.mjs
+      - verify.mjs
+      - .github/workflows/publish.yml
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Channel to sign
+        type: choice
+        default: stable
+        options: [stable, canary]
+
+permissions:
+  contents: write
+
+concurrency:
+  # Two runs signing at once would race on the version number and on the push.
+  group: publish-catalogue
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      CHANNEL: ${{ github.event.inputs.channel || 'stable' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check the signing key is present
+        env:
+          CATALOGUE_KEY: ${{ secrets.CATALOGUE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CATALOGUE_KEY:-}" ]; then
+            echo "::error::secrets.CATALOGUE_PRIVATE_KEY is not set. Paste the whole private PEM into it, BEGIN and END lines included."
+            exit 1
+          fi
+
+      - name: Decide whether there is anything to sign
+        id: decide
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sign=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          # A guard or a schema can change without the catalogue changing, and a
+          # source that has not moved cannot be republished: its version is not
+          # newer than what is already out there. Those pushes still run
+          # verify.mjs below; they just have nothing to publish.
+          if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "sign=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qx 'catalogue.src.json'; then
+            echo "sign=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sign=false" >> "$GITHUB_OUTPUT"
+            echo "catalogue.src.json did not change in this push; verifying only."
+          fi
+
+      - name: Sign
+        if: steps.decide.outputs.sign == 'true'
+        env:
+          CATALOGUE_KEY: ${{ secrets.CATALOGUE_PRIVATE_KEY }}
+        run: node build.mjs "$CHANNEL"
+
+      - name: Verify
+        env:
+          CATALOGUE_KEY: ${{ secrets.CATALOGUE_PRIVATE_KEY }}
+        run: node verify.mjs
+
+      - name: Commit what was signed
+        id: commit
+        if: steps.decide.outputs.sign == 'true'
+        run: |
+          set -euo pipefail
+          # The repository owner, not a bot: a publish is the owner's release,
+          # and the history should say so.
+          git config user.name "surapas3022"
+          git config user.email "surapas3022@gmail.com"
+          git add "config.${CHANNEL}.json"
+          if git diff --cached --quiet; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing changed in config.${CHANNEL}.json."
+            exit 0
+          fi
+          git commit -m "Publish catalogue on ${CHANNEL}"
+          git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Purge the CDN
+        if: steps.commit.outputs.pushed == 'true'
+        run: |
+          set -euo pipefail
+          # Without this the old file keeps being served for hours, and the run
+          # above reads as a successful release that reached nobody.
+          for URL in \
+            "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/config.${CHANNEL}.json" \
+            "https://purge.jsdelivr.net/gh/${{ github.repository }}/config.${CHANNEL}.json"
+          do
+            echo "purging ${URL}"
+            curl -fsS "$URL" || echo "::warning::purge failed for ${URL} — the file is published, the edge is just still holding the old one"
+            echo
+          done

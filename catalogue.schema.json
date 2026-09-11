@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ai-model-catalogue/catalogue.schema.json",
+  "title": "Model catalogue (the JSON inside the signed payload)",
+  "description": "This describes the object a consumer gets after verifying the signature and parsing payload. It is NOT the file on the CDN: that file is { payload: string, sig: string }. build.mjs validates catalogue.src.json against this file before signing, so what is published here and what a client is told to expect cannot drift apart.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "channel",
+    "minClientVersion",
+    "publishedAt",
+    "usdToThb",
+    "models",
+    "purposes",
+    "fallbackPrice"
+  ],
+
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Goes up, only ever. A deployment refuses a catalogue that is not newer than the one it already holds, so a number reused for different content reaches nobody who already adopted it."
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["stable", "canary"],
+      "description": "Stamped inside the payload, not only in the filename, so a file that is served from the wrong path still says what it is."
+    },
+    "minClientVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "A build whose CLIENT_VERSION is below this ignores the whole catalogue rather than reading the part it understands."
+    },
+    "publishedAt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601. Operator-facing only; nothing branches on it."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Shown to whoever is reading a deployment's catalogue status. Optional."
+    },
+    "usdToThb": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Applied at the edge where a USD rate becomes a baht figure on a report."
+    },
+    "models": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/model" },
+      "description": "Keyed by the exact model id passed to the provider."
+    },
+    "purposes": {
+      "type": "object",
+      "required": ["default"],
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "minLength": 1 },
+        "description": "Ordered: the first model that is still answering wins."
+      },
+      "description": "Feature id to an ordered chain of model ids. Keys are the same strings the product already passes at the call site, so the model map and the cost report name things the same way. A feature with no key here lands on default."
+    },
+    "fallbackPrice": {
+      "$ref": "#/$defs/price",
+      "description": "Used when a usage row names a model this catalogue does not describe. It keeps a cost report from reading as zero, which is why a model with no price of its own is refused at build time rather than left to land here."
+    }
+  },
+
+  "$defs": {
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "cachedInput", "output"],
+      "properties": {
+        "input": { "type": "number", "minimum": 0 },
+        "cachedInput": { "type": "number", "minimum": 0 },
+        "output": { "type": "number", "minimum": 0 }
+      },
+      "description": "USD per 1,000,000 tokens."
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price", "vision", "status", "retiresOn"],
+      "properties": {
+        "price": { "$ref": "#/$defs/price" },
+        "vision": {
+          "type": "boolean",
+          "description": "Can be handed an image. Required rather than optional so that adding a model is a decision about this, not an omission: an image-reading chain that falls to a model without it returns nothing useful and says nothing about why."
+        },
+        "embedding": {
+          "type": "boolean",
+          "description": "Produces vectors rather than text. Present only on embedding models."
+        },
+        "dim": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Vector width. Part of the model's identity, not a setting: vectors already stored were written at this size, and cosine against a different size is meaningless rather than merely worse. Required on an embedding model, which build.mjs checks."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ga", "preview", "deprecated", "retired"],
+          "description": "retired means no chain may name it, which build.mjs enforces. deprecated is a warning, not a refusal."
+        },
+        "retiresOn": {
+          "type": ["string", "null"],
+          "description": "ISO date the provider stops answering, or null when none is announced. Required so that null is something someone decided rather than something nobody wrote."
+        }
+      }
+    }
+  }
+}
