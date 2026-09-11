@@ -40,7 +40,13 @@ Public on purpose: jsDelivr cannot serve a private repo.
 4. `node verify.mjs` — must end `all good`.
 5. Commit source and generated files together. Push.
 
-**Add a model**
+**Add or reprice a model**
+Do it in both files, in the same commit. `verify.mjs` fails when a model in both
+carries different prices, and that check is the only thing standing between you
+and two defensible invoices that disagree. Raise both versions. Build both:
+`node build.mjs` and `node build.mjs --catalogue=lineup`.
+
+**Add a model to a chain**
 Add it under `models` with a complete `price` (`input`, `cachedInput`,
 `output` — all three, always). Set `vision` honestly: an image-reading chain
 with a `vision:false` model is refused by the build, and that refusal is the
@@ -76,6 +82,9 @@ no key, because it looks configured and is not.
 - Run `node build.mjs keygen` in a repo that already has a key pair. Every
   deployment carries the matching public key and would reject everything signed
   by a new one. The script refuses, and you should not work around it.
+- Route anything from `lineup`. Its `purposes` is a copy of what `config`
+  already routes to, present because the format demands the field. Take chains
+  from `config`.
 - Add a second model to `kb-embed-index` or `kb-embed-query`. Retrieval reads
   one vector table without filtering by model, so a fallback there makes search
   quietly worse rather than failing.
@@ -116,12 +125,14 @@ every check in it maps to a mistake that reaches a fleet.
 
 | file | what it is |
 |---|---|
-| `catalogue.src.json` | the source of truth, hand-edited, `_`-prefixed keys are comments stripped at build |
+| `catalogue.src.json` | the routing catalogue, hand-edited, `_`-prefixed keys are comments stripped at build |
+| `lineup.src.json` | the price reference, hand-edited. Every model with a rate, no routing opinion |
 | `catalogue.schema.json` | the shape of the source, enforced by the build and readable by a consumer writing a client |
 | `build.mjs` | validates shape then meaning, then signs source into `config.<channel>.json` |
 | `verify.mjs` | proves the signature holds and that `build.mjs` still refuses what it claims to |
 | `config.stable.json` | generated. Every deployment by default |
 | `config.canary.json` | generated. The two or three you are willing to break first |
+| `lineup.stable.json` | generated. Stable only: nothing breaks from a table nobody routes from |
 | `catalogue-public.pem` | committed, embedded in the product build, verifies only |
 | `catalogue-private.pem` | gitignored. Signs. On a laptop or in the `CATALOGUE_PRIVATE_KEY` secret, nowhere else |
 | `.github/workflows/publish.yml` | signs and publishes on a push to `main`, then purges the CDN edge |

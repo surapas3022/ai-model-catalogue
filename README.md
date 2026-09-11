@@ -13,6 +13,7 @@ from the product tree, and this catalogue outlives any single build of it.
 | file | |
 |---|---|
 | `catalogue.src.json` | the one you edit. Carries `_comment` keys, which are stripped before signing |
+| `lineup.src.json` | the second catalogue: every model with its rate, and no routing opinion |
 | `catalogue.schema.json` | the shape, enforced by `build.mjs` before it signs — not documentation that drifts |
 | `build.mjs` | signs, and refuses the mistakes listed below |
 | `verify.mjs` | 34 cases proving the signature and every one of those refusals |
@@ -22,6 +23,7 @@ from the product tree, and this catalogue outlives any single build of it.
 | `AGENTS.md`, `CLAUDE.md` | the same ground, for an AI agent editing this repository |
 | `.github/workflows/publish.yml` | signs on a push to `main`, then purges the CDN edge |
 | `config.stable.json`, `config.canary.json` | generated. Never hand-edit them |
+| `lineup.stable.json` | generated. Never hand-edit it |
 | `catalogue-public.pem` | committed, embedded in the product build |
 | `catalogue-private.pem` | gitignored, or not on disk at all — see below |
 
@@ -31,6 +33,7 @@ from the product tree, and this catalogue outlives any single build of it.
 node build.mjs keygen     # once, ever
 node build.mjs            # sign for the channel named in catalogue.src.json
 node build.mjs canary     # sign the same source as the canary channel
+node build.mjs --catalogue=lineup   # sign the price reference
 node verify.mjs           # prove the signature and the guards still hold
 ```
 
@@ -74,6 +77,27 @@ this instead of its own hardcoded model names, and
 consumer to copy. [`AGENTS.md`](AGENTS.md) is the same ground written for an AI
 coding agent editing this repository.
 
+## Two catalogues
+
+`config` is the routing decision. Its `purposes` say which model a feature
+calls, so changing it changes behaviour, and it has a canary channel for that
+reason.
+
+`lineup` is a price reference. Every model the provider publishes, with its
+rate, including models no chain names. Nothing routes from it. It exists
+because `fallbackPrice` is a guess: a cost report that meets a model it has no
+rate for falls back to that guess and reads plausibly while being wrong, on a
+report a customer pays for. It is stable-only, because a canary exists to break
+a few deployments first and nothing breaks from a table nobody routes from.
+
+**Which one a consumer fetches:** `config.stable.json`, always, and that alone
+is enough to run. Add `lineup.stable.json` only if you price usage and want a
+rate for a model `config` does not describe. Never take a chain from the lineup.
+
+A model that appears in both must carry the same price in both, and
+`verify.mjs` fails when it does not. Two price tables that drift produce two
+defensible invoices that disagree, with nothing in either file looking wrong.
+
 ## Three rules
 
 **`version` only ever goes up.** A deployment refuses a catalogue that is not
@@ -103,6 +127,7 @@ A deployment's channel is set when its build is generated, not at runtime.
 ```
 https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.stable.json
 https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.canary.json
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/lineup.stable.json
 ```
 
 Those paths are mutable, so jsDelivr caches them for hours. **Expect a change to

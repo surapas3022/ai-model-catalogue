@@ -227,6 +227,54 @@ console.log("\n9. what is published is what this build produces");
     rebuilt === readFileSync("config.stable.json", "utf8"));
 }
 
+console.log("\n10. the second catalogue, and the one thing having two of them can break");
+{
+  const lineupFile = readFileSync("lineup.stable.json", "utf8");
+  const { payload, sig } = JSON.parse(lineupFile);
+  check("lineup.stable.json verifies with the same public key",
+    verify(null, Buffer.from(payload, "utf8"), PUB, Buffer.from(sig, "base64")));
+
+  const lineup = JSON.parse(payload);
+  check("no _comment keys reached the wire", !payload.includes('"_'));
+  check("it is stamped stable, and has no canary to be confused with", lineup.channel === "stable");
+  check("it carries a default chain, because the format requires one",
+    Array.isArray(lineup.purposes?.default) && lineup.purposes.default.length > 0);
+  check("every model in it has a complete price",
+    Object.values(lineup.models).every((m) => typeof m.price?.input === "number" &&
+      typeof m.price?.cachedInput === "number" && typeof m.price?.output === "number"));
+
+  // The reason to check this is the reason the two files are dangerous: a rate
+  // corrected in one and forgotten in the other produces two defensible cost
+  // reports that disagree, and nothing in either file looks wrong.
+  const disagree = Object.entries(parsed.models)
+    .filter(([id]) => lineup.models[id])
+    .filter(([id, m]) => JSON.stringify(m.price) !== JSON.stringify(lineup.models[id].price))
+    .map(([id]) => id);
+  check("every model in both catalogues carries the same price in both",
+    disagree.length === 0, disagree.length ? `disagree on: ${disagree.join(", ")}` : "");
+
+  // A routing catalogue that names a model the lineup has never heard of is not
+  // wrong, but it is the case the lineup exists to remove.
+  const unpriced = [...new Set(Object.values(parsed.purposes).flat())].filter((id) => !lineup.models[id]);
+  check("every model the routing catalogue can reach also appears in the lineup",
+    unpriced.length === 0, unpriced.length ? `missing from lineup: ${unpriced.join(", ")}` : "");
+
+  copyFileSync("lineup.src.json", path.join(dir, "lineup.src.json"));
+  rmSync(path.join(dir, "lineup.stable.json"), { force: true });
+  let ok = true;
+  try { runBuild(["--catalogue=lineup"]); } catch { ok = false; }
+  const rebuilt = ok && readFileSync(path.join(dir, "lineup.stable.json"), "utf8");
+  check("lineup.stable.json is byte-for-byte what building its source produces now",
+    rebuilt === lineupFile);
+
+  rmSync(path.join(dir, "lineup.stable.json"), { force: true });
+  let refused = false;
+  try { runBuild(["canary", "--catalogue=lineup"]); } catch (e) {
+    refused = messageOf(e).includes("unknown channel");
+  }
+  check("the lineup refuses a canary channel it does not have", refused);
+}
+
 rmSync(dir, { recursive: true, force: true });
 
 console.log(`\n${fail === 0 ? "all good" : "FAILED"} · ${pass} passed, ${fail} failed\n`);

@@ -22,9 +22,27 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { generateKeyPairSync, sign, verify, createPrivateKey } from "node:crypto";
 
-const SRC = "catalogue.src.json";
 const SCHEMA = "catalogue.schema.json";
 const PUBLIC = "catalogue-public.pem";
+
+/**
+ * The catalogues this repository publishes. Same schema, same key, same rules;
+ * different files, and a consumer decides for itself which it needs.
+ *
+ *   config  what every deployment fetches. Its purposes are the routing
+ *           decision, so a change here changes which model a feature calls.
+ *   lineup  every Flash model the provider publishes, with its rate. Nothing
+ *           routes from it. It exists so a cost report can price a model the
+ *           routing catalogue has no opinion about, instead of falling back to
+ *           fallbackPrice and reading plausibly while being wrong.
+ *
+ * lineup is stable-only on purpose. Canary exists to break a few deployments
+ * first, and nothing breaks from a price table nobody routes from.
+ */
+const CATALOGUES = {
+  config: { src: "catalogue.src.json", prefix: "config", channels: ["stable", "canary"] },
+  lineup: { src: "lineup.src.json", prefix: "lineup", channels: ["stable"] },
+};
 
 /**
  * Where the private key is, when it is a file at all.
@@ -36,10 +54,20 @@ const PUBLIC = "catalogue-public.pem";
  */
 const PRIVATE_FILE = process.env.CATALOGUE_KEY_FILE ?? "catalogue-private.pem";
 
-/** stable and canary, and nothing else. See loadChannel for why. */
-const CHANNELS = ["stable", "canary"];
 
-if (process.argv[2] === "keygen") {
+const args = process.argv.slice(2);
+const nameArg = args.find((a) => a.startsWith("--catalogue="))?.split("=")[1] ?? "config";
+const positional = args.filter((a) => !a.startsWith("--"));
+
+if (!Object.hasOwn(CATALOGUES, nameArg)) {
+  console.error(`✗ unknown catalogue "${nameArg}" — expected one of: ${Object.keys(CATALOGUES).join(", ")}`);
+  process.exit(1);
+}
+const CATALOGUE = CATALOGUES[nameArg];
+const SRC = CATALOGUE.src;
+const CHANNELS = CATALOGUE.channels;
+
+if (positional[0] === "keygen") {
   if (existsSync(PRIVATE_FILE)) {
     console.error(`${PRIVATE_FILE} already exists. Refusing to overwrite it — every`);
     console.error("deployment already carrying the matching public key would");
@@ -85,15 +113,15 @@ const fail = (msg) => {
  * still holding last month's models. Nothing downstream could notice, because
  * every deployment was reading a file that was exactly as it had always been.
  */
-const channel = process.argv[2] || src.channel;
+const channel = positional[0] || src.channel;
 if (!CHANNELS.includes(channel)) {
-  console.error(`✗ unknown channel "${channel}" — expected one of: ${CHANNELS.join(", ")}`);
+  console.error(`✗ unknown channel "${channel}" for ${nameArg} — expected one of: ${CHANNELS.join(", ")}`);
   console.error("  nothing was signed.");
   process.exit(1);
 }
 src.channel = channel;
 
-const out = `config.${channel}.json`;
+const out = `${CATALOGUE.prefix}.${channel}.json`;
 
 // ---- shape, against catalogue.schema.json -----------------------------------
 
@@ -301,6 +329,6 @@ const retiring = Object.entries(src.models)
   .filter(([, m]) => m.retiresOn)
   .map(([id, m]) => `${id} → ${m.retiresOn}`);
 
-console.log(`✓ ${out} · version ${src.version} · channel ${channel} · minClient ${src.minClientVersion}`);
+console.log(`✓ ${out} · ${nameArg} · version ${src.version} · channel ${channel} · minClient ${src.minClientVersion}`);
 console.log(`  ${Object.keys(src.models).length} models · ${Object.keys(src.purposes).length} purposes · ${payload.length} bytes signed`);
 if (retiring.length) console.log(`  retiring: ${retiring.join(" · ")}`);

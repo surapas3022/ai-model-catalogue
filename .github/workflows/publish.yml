@@ -20,6 +20,7 @@ on:
     branches: [main]
     paths:
       - catalogue.src.json
+      - lineup.src.json
       - catalogue.schema.json
       - build.mjs
       - verify.mjs
@@ -64,57 +65,79 @@ jobs:
             exit 1
           fi
 
-      - name: Decide whether there is anything to sign
+      - name: Decide what to sign
         id: decide
         run: |
           set -euo pipefail
 
-          # Did the catalogue itself move in this push?
-          CHANGED=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            CHANGED=true
-          else
-            BEFORE="${{ github.event.before }}"
-            if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+          # The routing catalogue takes the dispatched channel; the lineup is
+          # stable-only, because canary exists to break a few deployments first
+          # and nothing breaks from a price table nobody routes from.
+          echo "targets=" > /tmp/targets
+
+          decide_one () {          # name, source file, output file
+            local NAME="$1" SRC="$2" OUT="$3"
+
+            CHANGED=false
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               CHANGED=true
-            elif git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qx 'catalogue.src.json'; then
-              CHANGED=true
+            else
+              BEFORE="${{ github.event.before }}"
+              if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+                CHANGED=true
+              elif git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qx "$SRC"; then
+                CHANGED=true
+              fi
             fi
-          fi
 
-          # A guard or a schema can change without the catalogue changing, and a
-          # source that has not moved cannot be republished: its version is not
-          # newer than what is already out there. Those pushes still run
-          # verify.mjs below; they just have nothing to publish.
-          if [ "$CHANGED" != true ]; then
-            echo "sign=false" >> "$GITHUB_OUTPUT"
-            echo "catalogue.src.json did not change in this push; verifying only."
-            exit 0
-          fi
+            # A guard or a schema can change without a catalogue changing, and a
+            # source that has not moved cannot be republished: its version is not
+            # newer than what is already out there. Those pushes still run
+            # verify.mjs below; they just have nothing to publish.
+            if [ "$CHANGED" != true ]; then
+              echo "$SRC did not change in this push; verifying only."
+              return
+            fi
 
-          # Whoever raised the version may also have run build.mjs before
-          # committing, which is what README.md used to tell everyone to do. The
-          # generated file is then already correct and already pushed, and
-          # signing again would only make build.mjs refuse a version it can see
-          # is published — a red run for a release that is, in fact, fine. Take
-          # the file as it stands and go straight to purging the edge, which is
-          # the one step a local build cannot do for itself.
-          SRC_V=$(node -p "JSON.parse(require('fs').readFileSync('catalogue.src.json','utf8')).version")
-          OUT_V=$(node -p "try{JSON.parse(JSON.parse(require('fs').readFileSync('config.${CHANNEL}.json','utf8')).payload).version}catch(e){0}")
-          if [ "$SRC_V" = "$OUT_V" ]; then
-            echo "sign=false" >> "$GITHUB_OUTPUT"
-            echo "prebuilt=true" >> "$GITHUB_OUTPUT"
-            echo "config.${CHANNEL}.json already carries version ${SRC_V}; verifying it, then purging."
-            exit 0
-          fi
+            # Whoever raised the version may also have built before committing,
+            # which is what README.md tells everyone to do. The generated file is
+            # then already correct and already pushed, and signing again would
+            # only make build.mjs refuse a version it can see is published — a red
+            # run for a release that is, in fact, fine. Take the file as it stands
+            # and go straight to purging the edge, which is the one step a local
+            # build cannot do for itself.
+            SRC_V=$(node -p "JSON.parse(require('fs').readFileSync('$SRC','utf8')).version")
+            OUT_V=$(node -p "try{JSON.parse(JSON.parse(require('fs').readFileSync('$OUT','utf8')).payload).version}catch(e){0}")
+            if [ "$SRC_V" = "$OUT_V" ]; then
+              echo "$OUT already carries version ${SRC_V}; verifying it, then purging."
+              echo "$NAME:prebuilt:$OUT" >> /tmp/targets
+            else
+              echo "$NAME:sign:$OUT" >> /tmp/targets
+            fi
+          }
 
-          echo "sign=true" >> "$GITHUB_OUTPUT"
+          decide_one config "catalogue.src.json" "config.${CHANNEL}.json"
+          decide_one lineup "lineup.src.json"    "lineup.stable.json"
+
+          {
+            echo "targets<<EOF"
+            grep -v '^targets=$' /tmp/targets || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Sign
-        if: steps.decide.outputs.sign == 'true'
         env:
           CATALOGUE_KEY: ${{ secrets.CATALOGUE_PRIVATE_KEY }}
-        run: node build.mjs "$CHANNEL"
+        run: |
+          set -euo pipefail
+          echo "${{ steps.decide.outputs.targets }}" | while IFS=: read -r NAME ACTION OUT; do
+            [ "$ACTION" = "sign" ] || continue
+            if [ "$NAME" = "config" ]; then
+              node build.mjs "$CHANNEL"
+            else
+              node build.mjs --catalogue="$NAME"
+            fi
+          done
 
       - name: Verify
         env:
@@ -123,34 +146,37 @@ jobs:
 
       - name: Commit what was signed
         id: commit
-        if: steps.decide.outputs.sign == 'true'
         run: |
           set -euo pipefail
           # The repository owner, not a bot: a publish is the owner's release,
           # and the history should say so.
           git config user.name "surapas3022"
           git config user.email "surapas3022@gmail.com"
-          git add "config.${CHANNEL}.json"
+          echo "${{ steps.decide.outputs.targets }}" | while IFS=: read -r NAME ACTION OUT; do
+            [ "$ACTION" = "sign" ] || continue
+            git add "$OUT"
+          done
           if git diff --cached --quiet; then
-            echo "pushed=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing changed in config.${CHANNEL}.json."
+            echo "Nothing changed in any generated file."
             exit 0
           fi
           git commit -m "Publish catalogue on ${CHANNEL}"
           git push
-          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Purge the CDN
-        if: steps.commit.outputs.pushed == 'true' || steps.decide.outputs.prebuilt == 'true'
+        if: steps.decide.outputs.targets != ''
         run: |
           set -euo pipefail
           # Without this the old file keeps being served for hours, and the run
           # above reads as a successful release that reached nobody.
-          for URL in \
-            "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/config.${CHANNEL}.json" \
-            "https://purge.jsdelivr.net/gh/${{ github.repository }}/config.${CHANNEL}.json"
-          do
-            echo "purging ${URL}"
-            curl -fsS "$URL" || echo "::warning::purge failed for ${URL} — the file is published, the edge is just still holding the old one"
-            echo
+          echo "${{ steps.decide.outputs.targets }}" | while IFS=: read -r NAME ACTION OUT; do
+            [ -n "$OUT" ] || continue
+            for URL in \
+              "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/${OUT}" \
+              "https://purge.jsdelivr.net/gh/${{ github.repository }}/${OUT}"
+            do
+              echo "purging ${URL}"
+              curl -fsS "$URL" || echo "::warning::purge failed for ${URL} — the file is published, the edge is just still holding the old one"
+              echo
+            done
           done

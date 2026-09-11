@@ -123,6 +123,12 @@ The build refuses a model with an incomplete price precisely so this report
 cannot silently fall back and read plausibly but wrong on an invoice the
 customer pays.
 
+If your report meets model ids the routing catalogue does not describe, fetch
+`lineup.stable.json` too and look there before reaching for `fallbackPrice`. It
+is the same envelope, the same key and the same checks, and every step above
+applies to it unchanged. Take prices from it and nothing else: routing stays
+with `config`.
+
 ## Step 9 — prove it before the fleet gets it
 
 1. Point one deployment at `canary`. Publish a change there only. Confirm it

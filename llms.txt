@@ -14,7 +14,20 @@ the shape, and `build.mjs` enforces it before signing, so the two cannot drift.
 ```
 https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.stable.json
 https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/config.canary.json
+https://cdn.jsdelivr.net/gh/surapas3022/ai-model-catalogue/lineup.stable.json
 ```
+
+Fetch `config.<your channel>.json` and nothing else, unless you price usage. It
+carries both the chains and a rate for every model it can reach, so it is
+complete on its own.
+
+`lineup.stable.json` is the second catalogue: same envelope, same key, same
+checks, every model the provider publishes with its rate, and no routing
+opinion. Fetch it as well when your cost report meets model ids `config` does
+not describe, and read prices from it. **Never take a chain from it.** Its
+`purposes` holds one copy of what `config` already routes to, because the format
+requires the field, and following it would freeze routing at the day the lineup
+was written.
 
 The file is an envelope, not the catalogue:
 
