@@ -91,7 +91,10 @@ console.log("\n3. build.mjs refuses what it says it refuses");
 refuses("a chain naming a model that does not exist",
   (s) => { s.purposes["auto-reply"] = ["gemini-does-not-exist"]; }, "not in models");
 refuses("an image chain naming a model with vision:false",
-  (s) => { s.purposes["attachment-vision"] = ["gemini-3.1-flash-lite"]; }, "vision:false");
+  (s) => {
+    s.models["gemini-3.1-flash-lite"].vision = false;
+    s.purposes["attachment-vision"] = ["gemini-3.1-flash-lite"];
+  }, "vision:false");
 refuses("an embedding chain with a fallback in it",
   (s) => { s.purposes["kb-embed-index"] = ["gemini-embedding-001", "gemini-3.7-flash"]; }, "exactly one model");
 refuses("a chain naming a model marked retired",

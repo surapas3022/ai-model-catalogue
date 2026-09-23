@@ -8,24 +8,24 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 7,
+  "version": 8,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-11T13:00:00Z",
-  "notes": "Carries priceSource and pricesCheckedOn from this version on. Same rates and same chains as version 6. A rate is the one field here that goes wrong without going missing, so the file now says where it was read and when.",
+  "publishedAt": "2026-09-23T08:00:00Z",
+  "notes": "Re-read priceSource on 2026-09-23 (page last updated 2026-09-22). Standard Flash and embedding rates unchanged: 3.8/3.7/3.6 flash still the through-31-Dec-2026 intro rates, not the 2027 doubling. gemini-3.8-flash, gemini-3.6-flash and gemini-3.1-flash-lite now vision:true because their model pages list Image as an input. No chain moves.",
 
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
-  "pricesCheckedOn": "2026-09-11",
+  "pricesCheckedOn": "2026-09-23",
 
   "usdToThb": 36,
 
   "models": {
-    "_vision_comment": "vision is what build.mjs checks an image-reading chain against, so it is a claim about the model rather than a label. The three models added here are in no chain, so vision:false costs nothing today and is the safe way to be unsure. Confirm it before naming any of them in a chain that reads an image.",
+    "_vision_comment": "vision is what build.mjs checks an image-reading chain against, so it is a claim about the model rather than a label. Confirmed from the model pages on 2026-09-23: 3.8, 3.7, 3.6, 3.5, 3.5-lite and 3.1-lite all list Image as an input.",
 
     "gemini-3.8-flash": {
-      "_comment": "โมเดล Flash รุ่นล่าสุด ประสิทธิภาพสูงสำหรับการประมวลผลทั่วไป งาน Agentic และงานที่ใช้เหตุผลซับซ้อน",
+      "_comment": "โมเดล Flash รุ่นล่าสุด ประสิทธิภาพสูงสำหรับการประมวลผลทั่วไป งาน Agentic และงานที่ใช้เหตุผลซับซ้อน. Inputs include Image; still in no chain.",
       "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
-      "vision": false,
+      "vision": true,
       "status": "ga",
       "retiresOn": null
     },
@@ -37,14 +37,14 @@
       "retiresOn": null
     },
     "gemini-3.6-flash": {
-      "_comment": "โมเดลเสถียรสำหรับการใช้งานจริง เพิ่มประสิทธิภาพ Token และลด Latency ในราคาประหยัด. Same rate as 3.8 and 3.7 flash, and like them it doubles on 1 January 2027: input 1.5, cached 0.15, output 7.5. Nothing in this format expresses a dated change, so someone has to publish that on the day.",
+      "_comment": "โมเดลเสถียรสำหรับการใช้งานจริง เพิ่มประสิทธิภาพ Token และลด Latency ในราคาประหยัด. Same rate as 3.8 and 3.7 flash, and like them it doubles on 1 January 2027: input 1.5, cached 0.15, output 7.5. Nothing in this format expresses a dated change, so someone has to publish that on the day. Inputs include Image.",
       "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
-      "vision": false,
+      "vision": true,
       "status": "ga",
       "retiresOn": null
     },
     "gemini-3.5-flash": {
-      "_comment": "โมเดลความเร็วสูงมาตรฐาน รองรับการประมวลผล Multimodal และบริบทขนาดใหญ่ (Long Context). vision:true because that description says it takes images; the other two added here say nothing either way.",
+      "_comment": "โมเดลความเร็วสูงมาตรฐาน รองรับการประมวลผล Multimodal และบริบทขนาดใหญ่ (Long Context).",
       "price": { "input": 1.5, "cachedInput": 0.15, "output": 9 },
       "vision": true,
       "status": "ga",
@@ -58,9 +58,9 @@
       "retiresOn": null
     },
     "gemini-3.1-flash-lite": {
-      "_comment": "โมเดลขนาดเล็กราคาประหยัด เหมาะสำหรับงานสรุปความ จัดหมวดหมู่ และการดึงข้อมูลจากเอกสาร. It is now dearer than 3.5-flash-lite on input and output both, while sitting below it as the fallback in eight chains — so falling back currently costs more than not falling back. Left alone because no chain moves in this release.",
+      "_comment": "โมเดลขนาดเล็กราคาประหยัด เหมาะสำหรับงานสรุปความ จัดหมวดหมู่ และการดึงข้อมูลจากเอกสาร. Page quotes text/image/video at 0.25 and audio at 0.50; input here is the text number. It is now dearer than 3.5-flash-lite on input and output both, while sitting below it as the fallback in eight chains — so falling back currently costs more than not falling back. Left alone because no chain moves in this release.",
       "price": { "input": 0.25, "cachedInput": 0.025, "output": 1.5 },
-      "vision": false,
+      "vision": true,
       "status": "ga",
       "retiresOn": null
     },
