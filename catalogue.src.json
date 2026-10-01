@@ -8,11 +8,11 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 10,
+  "version": 11,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-10-01T10:00:00Z",
-  "notes": "Every chain now leads with a lite model (owner's decision after the v9 auto-reply measurement): agent-copilot, rag-test, voicebot, kb-import-document, kb-answer-draft, attachment-vision and the three slip-ocr chains move gemini-3.5-flash-lite ahead of gemini-3.7-flash, which stays second as the fallback. Only auto-reply was measured; the reading-images chains were not. No price changes.",
+  "publishedAt": "2026-10-01T11:00:00Z",
+  "notes": "Added three feature ids for the pet-care product: pet-triage, pet-replenishment and vaccine-book-scan. All three lead with gemini-3.5-flash-lite, like every other chain since v10 (owner's decision 2026-10-01). No existing chain moves and no price changes.",
 
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
   "pricesCheckedOn": "2026-09-23",
@@ -92,6 +92,10 @@
     "kb-import-document": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
     "kb-answer-draft": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
 
+    "_pet_comment": "pet-triage reads an owner's description of symptoms. Lite leads since v11, like every chain (owner's decision 2026-10-01); gemini-3.8-flash follows as the fallback. Not measured on triage questions. pet-replenishment only phrases a supply estimate already worked out in code, so it stays on the lite pair.",
+    "pet-triage": ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite"],
+    "pet-replenishment": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+
     "booking-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "order-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "order-address": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
@@ -101,6 +105,8 @@
     "booking-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
     "order-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
     "inbox-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "_vaccine_comment": "vaccine-book-scan reads a handwritten vaccine book page. Lite leads since v11 (owner's decision 2026-10-01), with 3.8 and 3.5 Flash behind it. Note before trusting it: in the pet-care project's own tries the lite pair misread mock pages more often than Flash — measure on real pages.",
+    "vaccine-book-scan": ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"],
 
     "_embedding_comment": "Single entry on purpose. A fallback here would write vectors of a second model into one table, and retrieval reads that table without filtering by model.",
     "kb-embed-index": ["gemini-embedding-001"],
