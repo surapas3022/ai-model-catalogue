@@ -8,11 +8,11 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 9,
+  "version": 10,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-10-01T08:00:00Z",
-  "notes": "auto-reply now leads with gemini-3.5-flash-lite, then 3.1-flash-lite, with 3.7-flash last. Measured 2026-10-01 with the production auto-reply prompt on 30 Thai questions: 3.5-flash-lite answered 93 of 93 non-quota calls, passed every check, 1.5 s median, a quarter of 3.7-flash's cost; the Flash models returned 503 on most calls and were 3-6 times slower when they answered, with the same facts. No price changes.",
+  "publishedAt": "2026-10-01T10:00:00Z",
+  "notes": "Every chain now leads with a lite model (owner's decision after the v9 auto-reply measurement): agent-copilot, rag-test, voicebot, kb-import-document, kb-answer-draft, attachment-vision and the three slip-ocr chains move gemini-3.5-flash-lite ahead of gemini-3.7-flash, which stays second as the fallback. Only auto-reply was measured; the reading-images chains were not. No price changes.",
 
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
   "pricesCheckedOn": "2026-09-23",
@@ -82,25 +82,25 @@
 
     "_auto_reply_comment": "Lite first since v9: measured faster, cheaper and as correct as 3.7-flash on the product's own prompt (omnichannel-ai-gateway docs/report/ai-model-chain.md). 3.7-flash stays last as the way through when both lite models fail.",
     "auto-reply": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.7-flash"],
-    "agent-copilot": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "agent-copilot": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
     "handoff-summary": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "qa-audit": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
-    "rag-test": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "rag-test": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
     "translate": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
-    "voicebot": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "voicebot": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
 
-    "kb-import-document": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
-    "kb-answer-draft": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "kb-import-document": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "kb-answer-draft": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
 
     "booking-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "order-intent": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "order-address": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
 
     "_vision_comment": "Every chain below reads an image, so every model in them must have vision:true. build.mjs checks that.",
-    "attachment-vision": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
-    "booking-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
-    "order-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
-    "inbox-slip-ocr": ["gemini-3.7-flash", "gemini-3.5-flash-lite"],
+    "attachment-vision": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "booking-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "order-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "inbox-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
 
     "_embedding_comment": "Single entry on purpose. A fallback here would write vectors of a second model into one table, and retrieval reads that table without filtering by model.",
     "kb-embed-index": ["gemini-embedding-001"],
