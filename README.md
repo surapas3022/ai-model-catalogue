@@ -22,6 +22,8 @@ from the product tree, and this catalogue outlives any single build of it.
 | `client/catalogue-client.mjs` | a working consumer, ready to copy |
 | `AGENTS.md`, `CLAUDE.md` | the same ground, for an AI agent editing this repository |
 | `.github/workflows/publish.yml` | signs on a push to `main`, then purges the CDN edge |
+| `check-lineup.mjs` | says which models on Google's pages the lineup is missing, or whose shutdown date moved |
+| `.github/workflows/check-lineup.yml` | runs that every Monday and keeps a `lineup-drift` issue open until it is fixed |
 | `config.stable.json`, `config.canary.json` | generated. Never hand-edit them |
 | `lineup.stable.json` | generated. Never hand-edit it |
 | `catalogue-public.pem` | committed, embedded in the product build |

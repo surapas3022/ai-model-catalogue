@@ -1,0 +1,70 @@
+# Tells someone when Google has published a model, or moved a shutdown date,
+# that lineup.src.json does not know about yet.
+#
+# It never edits the catalogue. A rate is read off the pricing page by whoever
+# publishes it (AGENTS.md), so all this can usefully do is notice and say so,
+# in one issue that it keeps current rather than a new one every week.
+#
+#   drift found        open the issue, or rewrite its body with today's report
+#   nothing drifted    close the issue if one is open
+#   page unreadable    fail the run, so a broken parser is red rather than quiet
+name: Check lineup against Google
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"   # Mondays 02:00 UTC, 09:00 in Bangkok
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LABEL: lineup-drift
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Compare
+        id: compare
+        run: |
+          set -uo pipefail
+          node check-lineup.mjs > report.md
+          code=$?
+          cat report.md
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          # 2 is a page this script can no longer read. That is not drift to
+          # report, it is this check being broken, and it should look broken.
+          if [ "$code" -ge 2 ]; then exit "$code"; fi
+
+      - name: Open or update the issue
+        if: steps.compare.outputs.code == '1'
+        run: |
+          set -euo pipefail
+          gh label create "$LABEL" --color D93F0B --description "lineup.src.json is behind Google's pages" --force
+          {
+            echo "_Updated $(date -u +%Y-%m-%d) by [this run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})._"
+            echo
+            cat report.md
+          } > body.md
+          num=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$num" ]; then
+            gh issue edit "$num" --body-file body.md
+          else
+            gh issue create --title "lineup.src.json is behind Google's model pages" --label "$LABEL" --body-file body.md
+          fi
+
+      - name: Close the issue when caught up
+        if: steps.compare.outputs.code == '0'
+        run: |
+          set -euo pipefail
+          for num in $(gh issue list --label "$LABEL" --state open --json number --jq '.[].number'); do
+            gh issue close "$num" --comment "Caught up: nothing drifted as of $(date -u +%Y-%m-%d)."
+          done
