@@ -31,7 +31,7 @@ const PUBLIC = "catalogue-public.pem";
  *
  *   config  what every deployment fetches. Its purposes are the routing
  *           decision, so a change here changes which model a feature calls.
- *   lineup  every Flash model the provider publishes, with its rate. Nothing
+ *   lineup  every Gemini model the provider prices per token, with its rate. Nothing
  *           routes from it. It exists so a cost report can price a model the
  *           routing catalogue has no opinion about, instead of falling back to
  *           fallbackPrice and reading plausibly while being wrong.

@@ -1,6 +1,9 @@
 {
   "_comment": [
-    "Every Flash model the provider publishes, with its rate. A price reference, not a routing decision.",
+    "Every Gemini model the provider publishes with a per-token rate, with that rate. A price reference, not a routing decision.",
+    "This is where a new model appears first, so that every project reading this repo can see and price it without",
+    "a rebuild of its own. Models with no per-token rate (Veo per second, Lyria per song) and Gemma (no rate) are left out, because the",
+    "price shape here is per-token input/cached/output and cannot carry them.",
     "",
     "config.stable.json says which model a feature calls. This file says what a model costs, including",
     "models no chain names. It exists because fallbackPrice is a guess: a cost report that meets a model",
@@ -15,14 +18,14 @@
     "nothing customer-specific, because this is public too."
   ],
 
-  "version": 4,
+  "version": 5,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-09-23T08:00:00Z",
-  "notes": "Re-read priceSource on 2026-09-23. Standard Flash rates unchanged. Corrected image and live text rates that had been copied from 3.8 Flash. Added gemini-3.8-live and gemini-3.8-live-extended-thinking. 2.5 Flash and Flash-Lite are ga with limited access, not deprecated. 3.1 Flash Live Preview is deprecated in favour of 3.8 Live.",
+  "publishedAt": "2026-10-15T09:00:00Z",
+  "notes": "Re-read priceSource and the deprecations page on 2026-10-15. gemini-3.7-flash and gemini-3.5-flash are now aliases that route to 3.8 and 3.6 Flash, marked deprecated; 3.5 Flash repriced to 3.6 Flash's rate (0.75 / 0.075 / 3.75, was 1.5 / 0.15 / 9). The lineup now covers every per-token Gemini model, not only Flash: added gemini-4-argon, gemini-3.1-pro-preview, gemini-3-flash-preview, gemini-2.5-pro, gemini-3-pro-image and gemini-embedding-2, the TTS, Transcribe, Live Translate, native-audio, Omni and Robotics models, gemini-2.5-flash-image, plus gemini-nano-banana-2.1, the recommended replacement for gemini-3.1-flash-image. gemini-4-argon's rate is the one charged through 30 November 2026; it doubles on 1 December 2026 and someone has to publish that on the day. retiresOn set on gemini-3.1-flash-lite (2027-05-07), gemini-3.1-flash-live-preview (2026-11-17) and gemini-embedding-001 (2028-05-14). Other rates unchanged.",
 
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
-  "pricesCheckedOn": "2026-09-23",
+  "pricesCheckedOn": "2026-10-15",
 
   "usdToThb": 36,
 
@@ -37,10 +40,10 @@
       "retiresOn": null
     },
     "gemini-3.7-flash": {
-      "_comment": "Gemini 3.7 Flash · Active",
+      "_comment": "Gemini 3.7 Flash · alias since 2026-10. The endpoint is not shutting down and routes every request to gemini-3.8-flash, so it bills 3.8 Flash's rate, doubling on 1 January 2027 with it.",
       "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": true,
-      "status": "ga",
+      "status": "deprecated",
       "retiresOn": null
     },
     "gemini-3.6-flash": {
@@ -51,10 +54,10 @@
       "retiresOn": null
     },
     "gemini-3.5-flash": {
-      "_comment": "Gemini 3.5 Flash · Active",
-      "price": { "input": 1.5, "cachedInput": 0.15, "output": 9 },
+      "_comment": "Gemini 3.5 Flash · alias since 2026-10. The endpoint is not shutting down and routes every request to gemini-3.6-flash, and the pricing page no longer lists it, so this is 3.6 Flash's rate (was 1.5 / 0.15 / 9). Doubles on 1 January 2027 with 3.6.",
+      "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": true,
-      "status": "ga",
+      "status": "deprecated",
       "retiresOn": null
     },
     "gemini-2.5-flash": {
@@ -73,11 +76,11 @@
       "retiresOn": null
     },
     "gemini-3.1-flash-lite": {
-      "_comment": "Gemini 3.1 Flash-Lite · GA. input here is text/image/video; audio is 0.50.",
+      "_comment": "Gemini 3.1 Flash-Lite · GA. input here is text/image/video; audio is 0.50. Shutdown announced for 2027-05-07, replacement gemini-3.5-flash-lite.",
       "price": { "input": 0.25, "cachedInput": 0.025, "output": 1.5 },
       "vision": true,
       "status": "ga",
-      "retiresOn": null
+      "retiresOn": "2027-05-07"
     },
     "gemini-2.5-flash-lite": {
       "_comment": "Gemini 2.5 Flash-Lite · still served, access limited to prior users, not deprecated. input here is text/image/video; audio is 0.30.",
@@ -87,11 +90,52 @@
       "retiresOn": null
     },
 
+    "_beyond_flash_comment": "Not Flash, and here since v5 because this file tracks every per-token Gemini model. Pro models charge a higher rate above 200k prompt tokens; this shape carries one number, so the price here is the up-to-200k rate and a long-context call is under-billed.",
+
+    "gemini-4-argon": {
+      "_comment": "Gemini 4 Argon · GA, flagship reasoning model, not on the Free tier. Through 30 Nov 2026: 2.00 / 0.10 / 10.00. From 1 Dec 2026: 4.00 / 0.20 / 20.00 — nothing in this format expresses a dated change, so someone has to publish that on the day. Implicit caching only. Inputs: text, image, video, audio, PDF.",
+      "price": { "input": 2, "cachedInput": 0.1, "output": 10 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.1-pro-preview": {
+      "_comment": "Gemini 3.1 Pro · Preview. Up to 200k prompt tokens: 2.00 / 0.20 / 12.00. Above 200k: 4.00 / 0.40 / 18.00. No shutdown date announced. Inputs: text, image, video, audio, PDF.",
+      "price": { "input": 2, "cachedInput": 0.2, "output": 12 },
+      "vision": true,
+      "status": "preview",
+      "retiresOn": null
+    },
+    "gemini-3-flash-preview": {
+      "_comment": "Gemini 3 Flash · Preview. input here is text/image/video; audio is 1.00. No shutdown date announced; the deprecations page names gemini-3.6-flash as its replacement.",
+      "price": { "input": 0.5, "cachedInput": 0.05, "output": 3 },
+      "vision": true,
+      "status": "preview",
+      "retiresOn": null
+    },
+    "gemini-2.5-pro": {
+      "_comment": "Gemini 2.5 Pro · still served, access limited to prior users, not deprecated. Up to 200k prompt tokens: 1.25 / 0.125 / 10.00. Above 200k: 2.50 / 0.25 / 15.00.",
+      "price": { "input": 1.25, "cachedInput": 0.125, "output": 10 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+
     "_embedding_comment": "Not a Flash model, and not in the list this file was built from. It is here because config.stable.json routes kb-embed-index and kb-embed-query to it, and a lineup that cannot price something the router can reach has failed at the one job it has. The rate is the one already published in config.stable.json, and verify.mjs fails if the two ever stop matching.",
 
     "gemini-embedding-001": {
-      "_comment": "Embeddings bill input only. dim is part of the model's identity: stored vectors were written at this size and cosine against a different size is meaningless, not merely worse.",
+      "_comment": "Embeddings bill input only. dim is part of the model's identity: stored vectors were written at this size and cosine against a different size is meaningless, not merely worse. Shutdown announced for 2028-05-14, replacement gemini-embedding-2. The pricing page no longer has a section for this model; 0.15 is the rate it quotes for File Search embeddings.",
       "price": { "input": 0.15, "cachedInput": 0.15, "output": 0 },
+      "vision": false,
+      "embedding": true,
+      "dim": 768,
+      "status": "ga",
+      "retiresOn": "2028-05-14"
+    },
+
+    "gemini-embedding-2": {
+      "_comment": "Gemini Embedding 2 · GA, the announced replacement for gemini-embedding-001. Multimodal: text 0.20, image 0.45, audio 6.50, video 12.00 per 1M tokens; input here is the text number. Output dimension is flexible (128 to 3072). dim 768 is the one a move from embedding-001 would keep, and is a choice the caller makes, not a property of the model. vision false because no image-reading chain may route to an embedding model.",
+      "price": { "input": 0.2, "cachedInput": 0.2, "output": 0 },
       "vision": false,
       "embedding": true,
       "dim": 768,
@@ -102,8 +146,15 @@
     "_specialized_comment": "Image, image-lite and live. Their rates are quoted per million tokens like the rest, which is the only reason they fit this file at all — a model billed per image or per second of audio would need a price shape this schema does not have. Check the quoted unit before trusting a total. input and output here are the text numbers; the page also quotes audio and image-output rates that this shape cannot carry.",
 
     "gemini-3.1-flash-image": {
-      "_comment": "Gemini 3.1 Flash Image (Nano Banana 2) · GA. Text/image input 0.50, text output 3. Image output is 60 per 1M tokens. No context cache on the page, so cachedInput equals input.",
+      "_comment": "Gemini 3.1 Flash Image (Nano Banana 2) · GA. Text/image input 0.50, text output 3. Image output is 60 per 1M tokens. No context cache on the page, so cachedInput equals input. No shutdown date, but the deprecations page now names gemini-nano-banana-2.1 as its replacement.",
       "price": { "input": 0.5, "cachedInput": 0.5, "output": 3 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-nano-banana-2.1": {
+      "_comment": "Gemini Nano Banana 2.1 · GA since 2026-10-06, an update to gemini-3.1-flash-image. Text/image/video input 1.50, text and thinking output 7.50. Image output is 30 per 1M tokens. No context cache on the page, so cachedInput equals input. Three times 3.1 Flash Image's text rate while half its image-output rate.",
+      "price": { "input": 1.5, "cachedInput": 1.5, "output": 7.5 },
       "vision": true,
       "status": "ga",
       "retiresOn": null
@@ -111,6 +162,13 @@
     "gemini-3.1-flash-lite-image": {
       "_comment": "Gemini 3.1 Flash Lite Image (Nano Banana 2 Lite) · GA. Text/image/video input 0.25, text output 1.50. Image output is 30 per 1M tokens. No context cache on the page, so cachedInput equals input.",
       "price": { "input": 0.25, "cachedInput": 0.25, "output": 1.5 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3-pro-image": {
+      "_comment": "Gemini 3 Pro Image (Nano Banana Pro) · GA. Text/image input 2.00, text and thinking output 12.00. Image output is 120 per 1M tokens. No context cache on the page, so cachedInput equals input.",
+      "price": { "input": 2, "cachedInput": 2, "output": 12 },
       "vision": true,
       "status": "ga",
       "retiresOn": null
@@ -130,11 +188,112 @@
       "retiresOn": null
     },
     "gemini-3.1-flash-live-preview": {
-      "_comment": "Gemini 3.1 Flash Live · Preview, now the legacy Live API. Same Standard table as 3.8 Live. Provider recommends gemini-3.8-live. No shutdown date announced.",
+      "_comment": "Gemini 3.1 Flash Live · Preview, now the legacy Live API. Same Standard table as 3.8 Live. Provider recommends gemini-3.8-live. Shutdown announced for 2026-11-17.",
       "price": { "input": 0.75, "cachedInput": 0.75, "output": 4.5 },
       "vision": true,
       "status": "deprecated",
+      "retiresOn": "2026-11-17"
+    },
+
+    "_audio_video_comment": "Audio and video models. Every rate below is per 1M tokens on the page, which is the only reason they fit, but input or output is often audio or video rather than text, and the comment says which. Model billed per second or per item only (Veo, Lyria) and Gemma (no rate on the page) are not here.",
+
+    "gemini-3.8-flash-tts": {
+      "_comment": "Gemini 3.8 Flash TTS · GA. input is text, output is audio (per 1M audio tokens, about 0.00225 per 10 s). No context cache, so cachedInput equals input. Doubles on 1 January 2027 with the 3.8 family: 1.00 / 18.00.",
+      "price": { "input": 0.5, "cachedInput": 0.5, "output": 9 },
+      "vision": false,
+      "status": "ga",
       "retiresOn": null
+    },
+    "gemini-3.8-flash-lite-tts": {
+      "_comment": "Gemini 3.8 Flash-Lite TTS · GA. input is text, output is audio. No context cache, so cachedInput equals input. Doubles on 1 January 2027 with the 3.8 family: 1.00 / 12.00.",
+      "price": { "input": 0.5, "cachedInput": 0.5, "output": 6 },
+      "vision": false,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.1-flash-tts-preview": {
+      "_comment": "Gemini 3.1 Flash TTS · Preview, legacy. input is text, output is audio. Shutdown announced for 2026-11-17, replacement gemini-3.8-flash-tts or gemini-3.8-flash-lite-tts.",
+      "price": { "input": 1, "cachedInput": 1, "output": 20 },
+      "vision": false,
+      "status": "deprecated",
+      "retiresOn": "2026-11-17"
+    },
+    "gemini-2.5-flash-preview-tts": {
+      "_comment": "Gemini 2.5 Flash Preview TTS. input is text, output is audio. Shutdown announced for 2026-11-17, replacement the 3.8 TTS models.",
+      "price": { "input": 0.5, "cachedInput": 0.5, "output": 10 },
+      "vision": false,
+      "status": "deprecated",
+      "retiresOn": "2026-11-17"
+    },
+    "gemini-2.5-pro-preview-tts": {
+      "_comment": "Gemini 2.5 Pro Preview TTS. input is text, output is audio. Shutdown announced for 2026-11-17, replacement the 3.8 TTS models.",
+      "price": { "input": 1, "cachedInput": 1, "output": 20 },
+      "vision": false,
+      "status": "deprecated",
+      "retiresOn": "2026-11-17"
+    },
+    "gemini-3.5-transcribe": {
+      "_comment": "Gemini 3.5 Transcribe · GA, speech to text. input is audio (about 0.003 per minute), output is text. No context cache, so cachedInput equals input.",
+      "price": { "input": 2, "cachedInput": 2, "output": 12 },
+      "vision": false,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.5-transcribe-live": {
+      "_comment": "Gemini 3.5 Transcribe Live · GA, streaming speech to text over the Live API. input is audio, output is text.",
+      "price": { "input": 3.5, "cachedInput": 3.5, "output": 21 },
+      "vision": false,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-3.5-live-translate-preview": {
+      "_comment": "Gemini 3.5 Live Translate · Preview, speech to speech. input and output are both audio (about 0.0368 per minute blended).",
+      "price": { "input": 3.5, "cachedInput": 3.5, "output": 21 },
+      "vision": false,
+      "status": "preview",
+      "retiresOn": null
+    },
+    "gemini-2.5-flash-native-audio-preview-12-2025": {
+      "_comment": "Gemini 2.5 Flash Native Audio (Live API) · Preview. Text 0.50 in / 2.00 out; audio and video 3.00 in, audio 12.00 out. Shutdown announced for 2026-11-17, replacement gemini-3.8-live. Inputs: audio, video, text, so vision is true for video frames.",
+      "price": { "input": 0.5, "cachedInput": 0.5, "output": 2 },
+      "vision": true,
+      "status": "deprecated",
+      "retiresOn": "2026-11-17"
+    },
+    "gemini-omni-1.1-flash": {
+      "_comment": "Gemini Omni Flash · GA, video generation and editing. Text/image/video/audio input 1.50, text output 9.00; video output is 17.50 per 1M tokens (about 0.10 per second of 720p). Recommended replacement for the Veo 3.1 previews.",
+      "price": { "input": 1.5, "cachedInput": 1.5, "output": 9 },
+      "vision": true,
+      "status": "ga",
+      "retiresOn": null
+    },
+    "gemini-omni-flash-preview": {
+      "_comment": "Gemini Omni Flash Preview. Same rates as gemini-omni-1.1-flash. Shutdown announced for 2026-10-22, replacement gemini-omni-1.1-flash.",
+      "price": { "input": 1.5, "cachedInput": 1.5, "output": 9 },
+      "vision": true,
+      "status": "deprecated",
+      "retiresOn": "2026-10-22"
+    },
+    "gemini-robotics-er-2-preview": {
+      "_comment": "Gemini Robotics ER 2 · Preview, embodied-reasoning vision-language model. Text/image/video/audio input. Doubles on 1 January 2027 with the 3.8 family: 2.00 / 0.20 / 10.00.",
+      "price": { "input": 1, "cachedInput": 0.1, "output": 5 },
+      "vision": true,
+      "status": "preview",
+      "retiresOn": null
+    },
+    "gemini-robotics-er-2-streaming-preview": {
+      "_comment": "Gemini Robotics ER 2 Streaming · Preview, over the Live API. No context cache, so cachedInput equals input. Doubles on 1 January 2027 with the 3.8 family: 2.00 / 10.00.",
+      "price": { "input": 1, "cachedInput": 1, "output": 5 },
+      "vision": true,
+      "status": "preview",
+      "retiresOn": null
+    },
+    "gemini-2.5-flash-image": {
+      "_comment": "Gemini 2.5 Flash Image (Nano Banana) · deprecated. Text and image input 0.30, text output priced as 2.5 Flash (2.50); images bill per image (0.039), which this shape cannot carry. The two Google pages disagree on shutdown: the pricing page says 2026-10-02, the deprecations page 2027-03-15. retiresOn carries the earlier date, so nothing new is built on it. Replacement gemini-3.1-flash-image or gemini-3.1-flash-lite-image.",
+      "price": { "input": 0.3, "cachedInput": 0.3, "output": 2.5 },
+      "vision": true,
+      "status": "deprecated",
+      "retiresOn": "2026-10-02"
     }
   },
 

@@ -8,19 +8,19 @@
     "  3. Nothing customer-specific goes in here. This repo is public."
   ],
 
-  "version": 11,
+  "version": 12,
   "channel": "stable",
   "minClientVersion": 1,
-  "publishedAt": "2026-10-01T11:00:00Z",
-  "notes": "Added three feature ids for the pet-care product: pet-triage, pet-replenishment and vaccine-book-scan. All three lead with gemini-3.5-flash-lite, like every other chain since v10 (owner's decision 2026-10-01). No existing chain moves and no price changes.",
+  "publishedAt": "2026-10-15T09:00:00Z",
+  "notes": "Re-read priceSource and the deprecations page on 2026-10-15. gemini-3.7-flash is now an alias that the provider routes to gemini-3.8-flash, and gemini-3.5-flash one that routes to gemini-3.6-flash; both are marked deprecated and every chain that named them now names the model actually serving the call, so nothing a deployment calls changes. gemini-3.5-flash repriced to what 3.6-flash bills (0.75 / 0.075 / 3.75, was 1.5 / 0.15 / 9). retiresOn set on gemini-3.1-flash-lite (2027-05-07) and gemini-embedding-001 (2028-05-14); no chain moves off them yet.",
 
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing",
-  "pricesCheckedOn": "2026-09-23",
+  "pricesCheckedOn": "2026-10-15",
 
   "usdToThb": 36,
 
   "models": {
-    "_vision_comment": "vision is what build.mjs checks an image-reading chain against, so it is a claim about the model rather than a label. Confirmed from the model pages on 2026-09-23: 3.8, 3.7, 3.6, 3.5, 3.5-lite and 3.1-lite all list Image as an input.",
+    "_vision_comment": "vision is what build.mjs checks an image-reading chain against, so it is a claim about the model rather than a label. Confirmed from the model pages on 2026-09-23: 3.8, 3.7, 3.6, 3.5, 3.5-lite and 3.1-lite all list Image as an input. 3.7 and 3.5 are now aliases for 3.8 and 3.6.",
 
     "gemini-3.8-flash": {
       "_comment": "โมเดล Flash รุ่นล่าสุด ประสิทธิภาพสูงสำหรับการประมวลผลทั่วไป งาน Agentic และงานที่ใช้เหตุผลซับซ้อน. Inputs include Image; still in no chain.",
@@ -30,10 +30,10 @@
       "retiresOn": null
     },
     "gemini-3.7-flash": {
-      "_comment": "เน้นงานเขียนโค้ด งาน Agentic Workflows และปรับระดับความคิด (Thinking Level) ได้",
+      "_comment": "เน้นงานเขียนโค้ด งาน Agentic Workflows และปรับระดับความคิด (Thinking Level) ได้. Since 2026-10 the endpoint is an alias: the deprecations page says it is not shutting down and routes every request to gemini-3.8-flash, and the pricing page no longer lists it. Price is 3.8 Flash's, which doubles on 1 January 2027 like it. Kept so a deployment still on an older catalogue can price it; no chain names it since v12.",
       "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": true,
-      "status": "ga",
+      "status": "deprecated",
       "retiresOn": null
     },
     "gemini-3.6-flash": {
@@ -44,10 +44,10 @@
       "retiresOn": null
     },
     "gemini-3.5-flash": {
-      "_comment": "โมเดลความเร็วสูงมาตรฐาน รองรับการประมวลผล Multimodal และบริบทขนาดใหญ่ (Long Context).",
-      "price": { "input": 1.5, "cachedInput": 0.15, "output": 9 },
+      "_comment": "โมเดลความเร็วสูงมาตรฐาน รองรับการประมวลผล Multimodal และบริบทขนาดใหญ่ (Long Context). Since 2026-10 the endpoint is an alias that routes every request to gemini-3.6-flash, and the pricing page no longer lists it, so the price is 3.6 Flash's (was 1.5 / 0.15 / 9). Doubles on 1 January 2027 with 3.6. No chain names it since v12.",
+      "price": { "input": 0.75, "cachedInput": 0.075, "output": 3.75 },
       "vision": true,
-      "status": "ga",
+      "status": "deprecated",
       "retiresOn": null
     },
     "gemini-3.5-flash-lite": {
@@ -58,20 +58,20 @@
       "retiresOn": null
     },
     "gemini-3.1-flash-lite": {
-      "_comment": "โมเดลขนาดเล็กราคาประหยัด เหมาะสำหรับงานสรุปความ จัดหมวดหมู่ และการดึงข้อมูลจากเอกสาร. Page quotes text/image/video at 0.25 and audio at 0.50; input here is the text number. It is now dearer than 3.5-flash-lite on input and output both, while sitting below it as the fallback in eight chains — so falling back currently costs more than not falling back. Left alone because no chain moves in this release.",
+      "_comment": "โมเดลขนาดเล็กราคาประหยัด เหมาะสำหรับงานสรุปความ จัดหมวดหมู่ และการดึงข้อมูลจากเอกสาร. Page quotes text/image/video at 0.25 and audio at 0.50; input here is the text number. It is now dearer than 3.5-flash-lite on input and output both, while sitting below it as the fallback in eight chains — so falling back currently costs more than not falling back. Shutdown announced for 2027-05-07, replacement gemini-3.5-flash-lite. retiresOn published first in v12; chains move off it in a later version.",
       "price": { "input": 0.25, "cachedInput": 0.025, "output": 1.5 },
       "vision": true,
       "status": "ga",
-      "retiresOn": null
+      "retiresOn": "2027-05-07"
     },
     "gemini-embedding-001": {
-      "_comment": "Embeddings bill input only. dim is part of the model's identity here: stored vectors were written at this size and cosine against a different size is meaningless, not merely worse.",
+      "_comment": "Embeddings bill input only. dim is part of the model's identity here: stored vectors were written at this size and cosine against a different size is meaningless, not merely worse. Shutdown announced for 2028-05-14, replacement gemini-embedding-2. Moving means re-embedding the whole table, since vectors from two models cannot share it. The pricing page no longer has a section for this model; 0.15 is the rate it quotes for File Search embeddings.",
       "price": { "input": 0.15, "cachedInput": 0.15, "output": 0 },
       "vision": false,
       "embedding": true,
       "dim": 768,
       "status": "ga",
-      "retiresOn": null
+      "retiresOn": "2028-05-14"
     }
   },
 
@@ -80,17 +80,17 @@
 
     "default": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
 
-    "_auto_reply_comment": "Lite first since v9: measured faster, cheaper and as correct as 3.7-flash on the product's own prompt (omnichannel-ai-gateway docs/report/ai-model-chain.md). 3.7-flash stays last as the way through when both lite models fail.",
-    "auto-reply": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.7-flash"],
-    "agent-copilot": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "_auto_reply_comment": "Lite first since v9: measured faster, cheaper and as correct as 3.7-flash on the product's own prompt (omnichannel-ai-gateway docs/report/ai-model-chain.md). 3.8-flash stays last as the way through when both lite models fail (3.7-flash until v12, which now routes to 3.8 anyway).",
+    "auto-reply": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"],
+    "agent-copilot": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
     "handoff-summary": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
     "qa-audit": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
-    "rag-test": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "rag-test": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
     "translate": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
-    "voicebot": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "voicebot": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
 
-    "kb-import-document": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
-    "kb-answer-draft": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
+    "kb-import-document": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
+    "kb-answer-draft": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
 
     "_pet_comment": "pet-triage reads an owner's description of symptoms. Lite leads since v11, like every chain (owner's decision 2026-10-01); gemini-3.8-flash follows as the fallback. Not measured on triage questions. pet-replenishment only phrases a supply estimate already worked out in code, so it stays on the lite pair.",
     "pet-triage": ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite"],
@@ -101,12 +101,12 @@
     "order-address": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
 
     "_vision_comment": "Every chain below reads an image, so every model in them must have vision:true. build.mjs checks that.",
-    "attachment-vision": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
-    "booking-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
-    "order-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
-    "inbox-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.7-flash"],
-    "_vaccine_comment": "vaccine-book-scan reads a handwritten vaccine book page. Lite leads since v11 (owner's decision 2026-10-01), with 3.8 and 3.5 Flash behind it. Note before trusting it: in the pet-care project's own tries the lite pair misread mock pages more often than Flash — measure on real pages.",
-    "vaccine-book-scan": ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"],
+    "attachment-vision": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
+    "booking-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
+    "order-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
+    "inbox-slip-ocr": ["gemini-3.5-flash-lite", "gemini-3.8-flash"],
+    "_vaccine_comment": "vaccine-book-scan reads a handwritten vaccine book page. Lite leads since v11 (owner's decision 2026-10-01), with 3.8 and 3.6 Flash behind it (3.5 Flash until v12, which is now an alias for 3.6). Note before trusting it: in the pet-care project's own tries the lite pair misread mock pages more often than Flash — measure on real pages.",
+    "vaccine-book-scan": ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"],
 
     "_embedding_comment": "Single entry on purpose. A fallback here would write vectors of a second model into one table, and retrieval reads that table without filtering by model.",
     "kb-embed-index": ["gemini-embedding-001"],
