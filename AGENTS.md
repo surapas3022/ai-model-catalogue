@@ -51,12 +51,12 @@ January 2027. Version 4 of this catalogue published the 2027 rate as today's,
 and nothing caught it. The other is that `input` here is one number while the
 page charges audio separately from text.
 
-**Act on a `lineup-drift` issue**
+**Act on what `check-lineup.mjs` reports**
 `node check-lineup.mjs` says what is new, gone, or has a moved shutdown date. It
 deliberately does not say what anything costs: read the pricing page and follow
 the recipe below. A model on the page that should not be in the lineup goes in
-the script's `NOT_TRACKED`, with a reason. The issue closes itself on the next
-run that finds nothing.
+the script's `NOT_TRACKED`, with a reason. There is no scheduled run or issue on
+purpose; the owner checks weekly by hand.
 
 **Add or reprice a model**
 Do it in both files, in the same commit. `verify.mjs` fails when a model in both
@@ -154,8 +154,7 @@ every check in it maps to a mistake that reaches a fleet.
 | `catalogue-public.pem` | committed, embedded in the product build, verifies only |
 | `catalogue-private.pem` | gitignored. Signs. On a laptop or in the `CATALOGUE_PRIVATE_KEY` secret, nowhere else |
 | `.github/workflows/publish.yml` | signs and publishes on a push to `main`, then purges the CDN edge |
-| `check-lineup.mjs` | compares `lineup.src.json` with Google's pricing and deprecations pages; reports, never edits |
-| `.github/workflows/check-lineup.yml` | runs that weekly and keeps one `lineup-drift` issue open while anything differs |
+| `check-lineup.mjs` | compares `lineup.src.json` with Google's pricing and deprecations pages; reports, never edits. The owner runs it by hand each week |
 | `llms.txt` | the consumer contract: envelope, checks, prices, failure table |
 | `priceSource` | a field in both catalogues, naming the page the rates were read from |
 | `INTEGRATING.md` | how a product consumes this. Read it before touching client code |

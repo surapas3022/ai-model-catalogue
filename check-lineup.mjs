@@ -19,6 +19,8 @@
  * the pasted list that has been wrong twice. What this does is notice, so that
  * someone goes and reads.
  *
+ * Run by hand, weekly. There is no scheduled run on purpose.
+ *
  * Exit codes: 0 nothing drifted, 1 drift found, 2 a page could not be read or
  * no longer looks the way this script expects. 2 is deliberately loud: a parser
  * that silently found zero models would report "nothing new" forever.
